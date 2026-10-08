@@ -1,0 +1,8 @@
+/target/
+/.runtime/
+/config/application-local.properties
+/.env
+/.env.*
+!.env.example
+*.log
+

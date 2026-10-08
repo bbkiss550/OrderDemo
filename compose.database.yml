@@ -1,0 +1,23 @@
+services:
+  app:
+    environment:
+      DB_URL: jdbc:postgresql://database:5432/db_order_demo
+      DB_USERNAME: postgres
+    depends_on:
+      database:
+        condition: service_healthy
+  database:
+    image: postgres:17
+    environment:
+      POSTGRES_DB: db_order_demo
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD in .env}
+    volumes:
+      - database-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d db_order_demo"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+volumes:
+  database-data:

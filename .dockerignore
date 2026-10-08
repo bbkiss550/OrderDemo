@@ -1,0 +1,7 @@
+.runtime
+.git
+.env
+.env.*
+config
+target
+*.log
