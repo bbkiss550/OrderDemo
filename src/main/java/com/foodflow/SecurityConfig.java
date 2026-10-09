@@ -3,6 +3,8 @@ package com.foodflow;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.env.Environment;
+import org.springframework.core.env.Profiles;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.core.userdetails.*;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -17,7 +19,13 @@ public class SecurityConfig {
         return new InMemoryUserDetailsManager(User.withUsername(username)
                 .password("{bcrypt}"+new BCryptPasswordEncoder().encode(password)).roles("ADMIN").build());
     }
-    @Bean SecurityFilterChain security(HttpSecurity http) throws Exception {
+    @Bean SecurityFilterChain security(HttpSecurity http, Environment environment) throws Exception {
+        if (environment.acceptsProfiles(Profiles.of("mobile-preview"))) {
+            http.headers(headers -> headers
+                    .frameOptions(frame -> frame.disable())
+                    .contentSecurityPolicy(csp -> csp.policyDirectives(
+                            "frame-ancestors 'self' http://127.0.0.1:3000")));
+        }
         return http.authorizeHttpRequests(a -> a
                 .requestMatchers("/login", "/login/**", "/assets/**", "/css/**", "/js/**", "/order/**", "/media/menu/**", "/actuator/health", "/error").permitAll()
                 .anyRequest().hasRole("ADMIN"))

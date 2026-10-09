@@ -21,7 +21,7 @@ public class AdminController {
     @GetMapping({"/login","/login/failed"}) String login(Model model, jakarta.servlet.http.HttpServletRequest req) {
         model.addAttribute("failed",req.getRequestURI().endsWith("failed")); return "login";
     }
-    @GetMapping({"/admin","/admin/tables","/admin/floor-plan","/admin/packages","/admin/bills","/admin/settings","/admin/menu","/admin/categories"})
+    @GetMapping({"/admin","/admin/tables","/admin/reception","/admin/floor-plan","/admin/packages","/admin/bills","/admin/settings","/admin/menu","/admin/categories"})
     String admin(Model model,jakarta.servlet.http.HttpServletRequest req) {
         model.addAttribute("page",req.getRequestURI());
         model.addAttribute("shop",service.settings()); return "admin";
