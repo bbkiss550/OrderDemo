@@ -29,7 +29,7 @@ public class SecurityConfig {
         return http.authorizeHttpRequests(a -> a
                 .requestMatchers("/login", "/login/**", "/assets/**", "/css/**", "/js/**", "/order/**", "/media/menu/**", "/actuator/health", "/error").permitAll()
                 .anyRequest().hasRole("ADMIN"))
-            .formLogin(f -> f.loginPage("/login").defaultSuccessUrl("/admin", true).failureUrl("/login/failed").permitAll())
+            .formLogin(f -> f.loginPage("/login").defaultSuccessUrl("/admin/reception", true).failureUrl("/login/failed").permitAll())
             .logout(l -> l.logoutSuccessUrl("/login"))
             .build();
     }

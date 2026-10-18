@@ -2,5 +2,88 @@
 .floor-header{flex-direction:row;align-items:center}.floor-cell{position:relative;overflow:visible}.floor-cell.join-top{border-top:0;border-top-left-radius:0;border-top-right-radius:0}.floor-cell.join-right{border-right:0;border-top-right-radius:0;border-bottom-right-radius:0}.floor-cell.join-bottom{border-bottom:0;border-bottom-left-radius:0;border-bottom-right-radius:0}.floor-cell.join-left{border-left:0;border-top-left-radius:0;border-bottom-left-radius:0}.floor-cell.join-right:after{content:'';position:absolute;right:-4px;top:0;bottom:0;width:4px;background:inherit;pointer-events:none}.floor-cell.join-bottom:before{content:'';position:absolute;bottom:-4px;left:0;right:-4px;height:4px;background:inherit;pointer-events:none}@media(max-width:1000px){.floor-header{flex-direction:column;align-items:start}}
 .floor-cell.table-selected{box-shadow:none;border-color:#696cff!important}.floor-cell strong{white-space:nowrap}.floor-cell:focus-visible{z-index:1}body[data-page="/admin/floor-plan"] #pageActions{display:flex;gap:8px;flex-wrap:wrap}
 body[data-page="/admin/reception"] .floor-cell.blank{cursor:default;opacity:.5}body[data-page="/admin/reception"] .floor-cell.blank:hover{background:#fafbfe}
-body[data-page="/admin/reception"] .floor-workspace{grid-template-columns:minmax(0,1fr)}body[data-page="/admin/reception"] .floor-legend{margin:12px 0}body[data-page="/admin/reception"] .floor-scroll{max-height:calc(100vh - 300px);min-height:250px}
-body[data-page="/admin/reception"] .floor-board{grid-template-columns:repeat(var(--columns),minmax(56px,1fr));width:100%;min-width:calc(var(--columns)*60px - 4px)}body[data-page="/admin/reception"] .floor-cell{width:100%;height:auto;aspect-ratio:1 / 1}
+body:is([data-page="/admin/reception"],[data-page="/admin/floor-plan"]) .floor-workspace{grid-template-columns:minmax(0,1fr)}body:is([data-page="/admin/reception"],[data-page="/admin/floor-plan"]) .floor-legend{margin:12px 0}body:is([data-page="/admin/reception"],[data-page="/admin/floor-plan"]) .floor-scroll{overflow:visible;max-height:none;min-height:0}
+body:is([data-page="/admin/reception"],[data-page="/admin/floor-plan"]) .floor-board{grid-template-columns:repeat(var(--columns),minmax(0,1fr));width:100%;min-width:0}body:is([data-page="/admin/reception"],[data-page="/admin/floor-plan"]) .floor-cell{min-width:0;min-height:0;width:100%;height:auto;aspect-ratio:1 / 1}
+body:is([data-page="/admin/reception"],[data-page="/admin/floor-plan"]) .floor-cell small,body:is([data-page="/admin/reception"],[data-page="/admin/floor-plan"]) .expired-marker{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* Keep floor selection beside the map and status descriptions below it. */
+.floor-layout{display:grid;grid-template-columns:148px minmax(0,1fr);gap:20px;align-items:start}
+.floor-selector{padding:16px 12px;min-width:0}
+.floor-selector h2{font-size:14px;margin:0 0 14px;font-weight:700}
+.floor-selector .floor-tabs{flex-direction:column;align-items:stretch;margin:0}
+.floor-selector .floor-tabs .btn{display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:4px;min-height:60px;text-align:left;white-space:normal;overflow-wrap:anywhere}
+.floor-selector .floor-tabs small{font-size:11px}
+.floor-main{min-width:0}
+body[data-page="/admin/floor-plan"] .floor-header{flex-shrink:0;flex-wrap:wrap;flex-direction:row;align-items:center;padding:12px 16px;margin-bottom:12px;gap:12px}
+body[data-page="/admin/floor-plan"] .floor-header h3{font-size:15px;margin-bottom:4px}
+body[data-page="/admin/floor-plan"] .floor-header .muted{font-size:11px}
+body[data-page="/admin/floor-plan"] .floor-tools{gap:8px}
+body[data-page="/admin/floor-plan"] .floor-tools .btn{min-height:36px}
+.floor-table-summary{margin:0 0 18px}
+.floor-table-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:20px}
+.floor-table-actions .btn{flex:1;min-height:44px}
+.floor-board.design [data-table]{cursor:grab}
+.floor-board.design.table-dragging,.floor-board.design.table-dragging .floor-cell{cursor:grabbing}
+.floor-board.design.table-dragging.drop-blocked,.floor-board.design.table-dragging.drop-blocked .floor-cell{cursor:not-allowed}
+.floor-board.design .table-drag-source{opacity:.5}
+.floor-board.design .cell-drop-valid{background:#dbeafe!important;outline:2px solid #6965ff;outline-offset:-2px;z-index:2}
+.floor-board.design .cell-drop-invalid{background:#fee2e2!important;outline:2px solid #dc3545;outline-offset:-2px;z-index:2}
+@media(max-width:700px){
+ body[data-page="/admin/floor-plan"] .floor-header{padding:10px 12px;gap:8px}
+ body[data-page="/admin/floor-plan"] .floor-header>div:first-child{display:flex;align-items:center;gap:8px}
+ body[data-page="/admin/floor-plan"] .floor-header h3{margin-bottom:0}
+ body[data-page="/admin/floor-plan"] .floor-selector .floor-tabs .btn{flex-direction:row;align-items:center;min-height:36px;padding:6px 10px;gap:6px}
+}
+@media(max-height:500px){
+ body[data-page="/admin/floor-plan"] .floor-header{padding:6px 8px}
+ body[data-page="/admin/floor-plan"] .floor-header>div:first-child{display:none}
+ body[data-page="/admin/floor-plan"] .floor-tools{gap:6px}
+ body[data-page="/admin/floor-plan"] .floor-tools .btn{font-size:11px;min-height:32px;padding:6px 8px}
+}
+body:is([data-page="/admin/reception"],[data-page="/admin/floor-plan"]) .floor-main .floor-legend{margin:16px 0 0;padding:0 4px;gap:12px 20px}
+@media(max-width:700px){
+ .floor-layout{grid-template-columns:minmax(0,1fr);gap:14px}
+ .floor-selector{padding:12px}
+ .floor-selector h2{margin-bottom:10px}
+ .floor-selector .floor-tabs{flex-direction:row;flex-wrap:wrap}
+ .floor-selector .floor-tabs .btn{min-height:48px;flex:0 1 auto}
+}
+
+/* Fit both floor workspaces to the viewport, including the entire square grid. */
+body:is([data-page="/admin/reception"],[data-page="/admin/floor-plan"]){height:100dvh;overflow:hidden}
+body:is([data-page="/admin/reception"],[data-page="/admin/floor-plan"]) .page-shell{height:100dvh;display:flex;flex-direction:column;padding:clamp(10px,2vh,24px) clamp(12px,2vw,32px)}
+body:is([data-page="/admin/reception"],[data-page="/admin/floor-plan"]) main{flex:1;min-height:0;display:flex;flex-direction:column}
+body:is([data-page="/admin/reception"],[data-page="/admin/floor-plan"]) .page-heading{flex-shrink:0;margin-bottom:14px}
+body:is([data-page="/admin/reception"],[data-page="/admin/floor-plan"]) #loadError{flex-shrink:0}
+body:is([data-page="/admin/reception"],[data-page="/admin/floor-plan"]) #content{flex:1;min-height:0;display:flex;flex-direction:column}
+body:is([data-page="/admin/reception"],[data-page="/admin/floor-plan"]) footer{flex-shrink:0;padding-top:12px}
+body:is([data-page="/admin/reception"],[data-page="/admin/floor-plan"]) .floor-layout{flex:1;min-height:0;align-items:stretch}
+body:is([data-page="/admin/reception"],[data-page="/admin/floor-plan"]) .floor-selector{align-self:start;max-height:100%}
+body:is([data-page="/admin/reception"],[data-page="/admin/floor-plan"]) .floor-main{min-height:0;display:flex;flex-direction:column}
+body:is([data-page="/admin/reception"],[data-page="/admin/floor-plan"]) .floor-main .floor-legend{flex-shrink:0;margin-top:12px}
+body:is([data-page="/admin/reception"],[data-page="/admin/floor-plan"]) .floor-workspace{flex:1;min-height:0;align-items:stretch}
+body:is([data-page="/admin/reception"],[data-page="/admin/floor-plan"]) .floor-canvas{min-height:0;display:flex;flex-direction:column}
+body:is([data-page="/admin/reception"],[data-page="/admin/floor-plan"]) .floor-scroll{flex:1;min-width:0;container-type:size;display:grid;place-items:center}
+body:is([data-page="/admin/reception"],[data-page="/admin/floor-plan"]) .floor-board{
+ --floor-gap:min(4px,calc(25cqw / var(--columns)),calc(25cqh / var(--rows)));
+ --cell-size:min(calc((100cqw - (var(--columns) - 1) * var(--floor-gap)) / var(--columns)),calc((100cqh - (var(--rows) - 1) * var(--floor-gap)) / var(--rows)));
+ grid-template-columns:repeat(var(--columns),var(--cell-size));grid-template-rows:repeat(var(--rows),var(--cell-size));gap:var(--floor-gap);width:max-content
+}
+body:is([data-page="/admin/reception"],[data-page="/admin/floor-plan"]) .floor-cell{height:100%;padding:min(3px,calc(var(--cell-size) * .08));border-width:min(1px,calc(var(--cell-size) * .03));line-height:1.2}
+body:is([data-page="/admin/reception"],[data-page="/admin/floor-plan"]) .floor-cell strong{font-size:min(14px,calc(var(--cell-size) * .28))}
+body:is([data-page="/admin/reception"],[data-page="/admin/floor-plan"]) .floor-cell small{font-size:min(10px,calc(var(--cell-size) * .19))}
+body:is([data-page="/admin/reception"],[data-page="/admin/floor-plan"]) .expired-marker{font-size:min(10px,calc(var(--cell-size) * .16))}
+body:is([data-page="/admin/reception"],[data-page="/admin/floor-plan"]) .floor-cell.join-right:after{right:calc(-1 * var(--floor-gap));width:var(--floor-gap)}
+body:is([data-page="/admin/reception"],[data-page="/admin/floor-plan"]) .floor-cell.join-bottom:before{bottom:calc(-1 * var(--floor-gap));right:calc(-1 * var(--floor-gap));height:var(--floor-gap)}
+@media(max-width:700px){
+ body:is([data-page="/admin/reception"],[data-page="/admin/floor-plan"]) .floor-layout{grid-template-rows:auto minmax(0,1fr);gap:12px}
+ body:is([data-page="/admin/reception"],[data-page="/admin/floor-plan"]) .floor-selector{display:flex;flex-direction:row;align-items:center;gap:12px;padding:10px 12px}
+ body:is([data-page="/admin/reception"],[data-page="/admin/floor-plan"]) .floor-selector h2{flex-shrink:0;margin:0}
+ body:is([data-page="/admin/reception"],[data-page="/admin/floor-plan"]) .floor-selector .floor-tabs{flex:1;min-width:0}
+ body:is([data-page="/admin/reception"],[data-page="/admin/floor-plan"]) .floor-selector .floor-tabs .btn{min-height:44px;padding:8px 12px;gap:2px}
+ body:is([data-page="/admin/reception"],[data-page="/admin/floor-plan"]) .floor-main .floor-legend{font-size:11px;gap:8px 12px}
+}
+@media(max-height:650px){
+ body:is([data-page="/admin/reception"],[data-page="/admin/floor-plan"]) .page-heading h1{font-size:20px;margin-bottom:0}
+ body:is([data-page="/admin/reception"],[data-page="/admin/floor-plan"]) .floor-canvas{padding:10px}
+}

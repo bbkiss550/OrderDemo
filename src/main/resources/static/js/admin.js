@@ -8,9 +8,10 @@ const isFloorPage=['/admin/reception','/admin/floor-plan'].includes(page);
 let state, search='', modalSubmit, busy=false;
 const editor=new bootstrap.Modal($('#editor'));
 const titles={'/admin/menu':['จัดการเมนูอาหาร','ตั้งค่ารายการอาหาร เปิด–ปิด และเลือกแพ็กเกจที่สั่งได้'],'/admin/categories':['หมวดหมู่อาหาร','จัดหมวดหมู่และลำดับเมนูสำหรับหน้าสั่งอาหาร'],'/admin':['แดชบอร์ด','ภาพรวมร้านและรอบการใช้บริการวันนี้'],'/admin/tables':['จัดการโต๊ะอาหาร','รับลูกค้า เปิดบิล และออก QR สำหรับแต่ละรอบบริการ'],'/admin/reception':['รับลูกค้าและเช็คบิล','ดูสถานะโต๊ะ เปิดบิล ดู QR ย้ายโต๊ะ และรับชำระเงิน'],'/admin/floor-plan':['จัดการผังโต๊ะ','ออกแบบพื้นที่โต๊ะ เพิ่มชั้น และกำหนดจำนวนที่นั่ง'],'/admin/packages':['แพ็กเกจบุฟเฟต์','แต่ละแพ็กเกจมีราคาผู้ใหญ่และเด็ก บิลละหนึ่งแพ็กเกจ'],'/admin/bills':['บิลและการชำระเงิน','ติดตามบิลที่เปิดอยู่ ตรวจยอด และบันทึกการชำระเงิน'],'/admin/settings':['ตั้งค่าร้านอาหาร','กำหนด VAT เวลาใช้บริการ ค่าปรับ และกระดาษใบเปิดบิล']};
-const [title,subtitle]=titles[page];$('#pageTitle').textContent=title;$('#crumb').textContent=title;$('#pageSubtitle').textContent=subtitle;
-document.querySelector(`[data-nav="${page}"]`).classList.add('active');
-$('#menuToggle').onclick=()=>$('#sidebar').classList.toggle('show');
+const [title]=titles[page];$('#pageTitle').textContent=title;
+const activeNav=document.querySelector(`[data-nav="${page}"]`);activeNav.classList.add('active');activeNav.setAttribute('aria-current','page');
+$('#menuToggle').onclick=()=>{const open=$('#sidebar').classList.toggle('show');$('#menuToggle').setAttribute('aria-expanded',String(open));};
+$('#sidebarClose').onclick=()=>{$('#sidebar').classList.remove('show');$('#menuToggle').setAttribute('aria-expanded','false');$('#menuToggle').focus();};
 function toast(message){$('#toast').textContent=message;$('#toast').hidden=false;setTimeout(()=>$('#toast').hidden=true,4000);}
 async function api(path,body){
  const headers={'Accept':'application/json'};
@@ -19,7 +20,7 @@ async function api(path,body){
  if(response.redirected||!(response.headers.get('Content-Type')||'').includes('application/json')) throw new Error('กรุณาเข้าสู่ระบบใหม่');
  const data=await response.json();if(!response.ok)throw new Error(data.message||'ไม่สามารถบันทึกข้อมูลได้');return data;
 }
-async function refresh(){try{state=await api('/api/admin/state');if(isFloorPage)await floorPlan.load();$('#shopName').textContent=state.settings.name;$('#loadError').classList.add('d-none');render();}catch(e){$('#loadError').textContent=e.message;$('#loadError').classList.remove('d-none');}}
+async function refresh(){try{state=await api('/api/admin/state');if(isFloorPage)await floorPlan.load();$('#loadError').classList.add('d-none');render();}catch(e){$('#loadError').textContent=e.message;$('#loadError').classList.remove('d-none');}}
 function requestKey(){const b=crypto.getRandomValues(new Uint8Array(16));b[6]=(b[6]&15)|64;b[8]=(b[8]&63)|128;const hex=Array.from(b,n=>n.toString(16).padStart(2,'0')).join('');return `${hex.slice(0,8)}-${hex.slice(8,12)}-${hex.slice(12,16)}-${hex.slice(16,20)}-${hex.slice(20)}`;}
 function badge(text,type='purple'){return `<span class="pill ${type}">${escapeHtml(text)}</span>`;}
 function button(text,action,id='',style='btn-soft'){return `<button class="btn btn-sm ${style}" data-action="${action}" data-id="${id}">${text}</button>`;}
@@ -29,7 +30,7 @@ function filtered(rows,field){return rows.filter(r=>String(r[field]).toLowerCase
 function billStatus(b){return b.status==='PAID'?badge('ชำระแล้ว','green'):b.expired?badge('หมดเวลาสั่ง','red'):badge('กำลังใช้บริการ','orange');}
 function billTable(rows){if(!rows.length)return empty('ยังไม่มีบิลในรายการนี้');return `<div class="table-responsive"><table class="table mb-0"><thead><tr><th>เลขที่บิล</th><th>โต๊ะ / ลูกค้า</th><th>เริ่มบริการ</th><th>สิ้นสุด</th><th>ยอดค่าบริการ</th><th>สถานะ</th><th>จัดการ</th></tr></thead><tbody>${rows.map(b=>`<tr><td><strong>#${String(b.id).padStart(5,'0')}</strong></td><td>${escapeHtml(b.table_name)}<small class="d-block muted">${b.guests} คน</small></td><td>${date(b.opened_at)}</td><td>${date(b.ends_at)}</td><td>฿${money(b.status==='PAID'?b.paid_total:b.total)}</td><td>${billStatus(b)}</td><td>${button('รายละเอียด','bill',b.id)} ${b.status==='OPEN'?button('เช็คบิล','checkout',b.id):''}</td></tr>`).join('')}</tbody></table></div>`;}
 function render(){
- $('#pageActions').innerHTML=page==='/admin/tables'?button('+ เพิ่มโต๊ะ','new-table','','btn-primary'):page==='/admin/packages'?button('+ เพิ่มแพ็กเกจ','new-package','','btn-primary'):page==='/admin/settings'?button('แก้ไขการตั้งค่า','settings','','btn-primary'):button('รับลูกค้า / เปิดบิล','open','','btn-primary');
+ $('#pageActions').innerHTML=['/admin','/admin/bills'].includes(page)?'':page==='/admin/tables'?button('+ เพิ่มโต๊ะ','new-table','','btn-primary'):page==='/admin/packages'?button('+ เพิ่มแพ็กเกจ','new-package','','btn-primary'):page==='/admin/settings'?button('แก้ไขการตั้งค่า','settings','','btn-primary'):button('รับลูกค้า / เปิดบิล','open','','btn-primary');
  if(page==='/admin')renderDashboard();if(page==='/admin/tables')renderTables();if(page==='/admin/packages')renderPackages();if(page==='/admin/bills')$('#content').innerHTML=toolbar('ค้นหาเลขที่บิลหรือโต๊ะ')+`<div class="card section-card">${billTable(state.bills.filter(b=>`${b.id} ${b.table_name}`.toLowerCase().includes(search.toLowerCase())))}</div>`;if(page==='/admin/settings')renderSettings();
  if(isFloorPage)floorPlan.render();if(page==='/admin/menu')menuCatalog.renderMenus();if(page==='/admin/categories')menuCatalog.renderCategories();
  if($('#search')){let timer;$('#search').oninput=e=>{search=e.target.value;clearTimeout(timer);timer=setTimeout(()=>{const pos=e.target.selectionStart;render();$('#search').focus();try{$('#search').setSelectionRange(pos,pos);}catch{}},250);};}
