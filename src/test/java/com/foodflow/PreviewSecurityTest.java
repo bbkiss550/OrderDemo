@@ -22,7 +22,9 @@ class PreviewSecurityTest {
     @Configuration
     @EnableWebSecurity
     @EnableWebMvc
-    static class WebSecurity {}
+    static class WebSecurity {
+        @org.springframework.context.annotation.Bean org.springframework.jdbc.core.JdbcTemplate db(){return org.mockito.Mockito.mock(org.springframework.jdbc.core.JdbcTemplate.class);}
+    }
 
     @RestController
     static class LoginPage {

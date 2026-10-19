@@ -10,25 +10,56 @@ import org.springframework.http.*;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.format.annotation.DateTimeFormat;
+import java.time.LocalDate;
 
 @Controller
 public class AdminController {
     private final AdminService service;
     private final FloorPlanService floorPlan;
     private final MenuService menu;
-    public AdminController(AdminService service,FloorPlanService floorPlan,MenuService menu) { this.service=service; this.floorPlan=floorPlan; this.menu=menu; }
-    @GetMapping("/") String home() { return "redirect:/admin"; }
+    private final ReportService reports;
+    private final StaffService staff;
+    private final HistoryService history;
+    public AdminController(AdminService service,FloorPlanService floorPlan,MenuService menu,ReportService reports,StaffService staff,HistoryService history) { this.service=service; this.floorPlan=floorPlan; this.menu=menu; this.reports=reports; this.staff=staff;this.history=history; }
+    @GetMapping("/") String home(java.security.Principal actor) { return "redirect:"+StaffService.landing((String)staff.current(actor.getName()).get("role")); }
     @GetMapping({"/login","/login/failed"}) String login(Model model, jakarta.servlet.http.HttpServletRequest req) {
         model.addAttribute("failed",req.getRequestURI().endsWith("failed")); return "login";
     }
     @GetMapping("/admin/tables") String tables() { return "redirect:/admin/reception"; }
-    @GetMapping({"/admin","/admin/reception","/admin/floor-plan","/admin/packages","/admin/bills","/admin/settings","/admin/menu","/admin/categories"})
+    @GetMapping({"/admin","/admin/reception","/admin/floor-plan","/admin/packages","/admin/bills","/admin/settings","/admin/menu","/admin/categories","/admin/reports","/admin/staff","/admin/audit","/admin/kitchen","/admin/orders","/admin/kds"})
     String admin(Model model,jakarta.servlet.http.HttpServletRequest req) {
         model.addAttribute("page",req.getRequestURI());
+        model.addAttribute("user",staff.current(req.getUserPrincipal().getName()));
         model.addAttribute("shop",service.settings()); return "admin";
     }
-    @GetMapping("/api/admin/state") @ResponseBody Map<String,Object> state() {
-        return Map.of("settings",service.settings(),"packages",service.packages(),"tables",service.tables(),"bills",service.bills(),"stats",service.stats(),"floors",floorPlan.floors(),"categories",menu.categories(),"menus",menu.menus());
+    @GetMapping("/api/admin/state") @ResponseBody Map<String,Object> state(java.security.Principal actor) {
+        var user=staff.current(actor.getName());String role=(String)user.get("role");var result=new LinkedHashMap<String,Object>();result.put("user",user);
+        if(role.equals("KITCHEN")){
+            result.put("settings",Map.of("name",service.settings().get("name")));result.put("categories",menu.categories());result.put("menus",menu.menus());
+            result.put("packages",service.packages().stream().map(p->Map.of("id",p.get("id"),"name",p.get("name"),"active",p.get("active"))).toList());
+            return result;
+        }
+        result.putAll(Map.of("settings",service.settings(),"packages",service.packages(),"tables",service.tables(),"bills",role.equals("ADMIN")?service.bills():List.of(),"stats",role.equals("ADMIN")?service.stats():Map.of(),"floors",floorPlan.floors(),"categories",role.equals("ADMIN")?menu.categories():List.of(),"menus",role.equals("ADMIN")?menu.menus():List.of()));return result;
+    }
+    @GetMapping("/api/admin/staff") @ResponseBody List<Map<String,Object>> staffList(){return staff.list();}
+    @PostMapping("/api/admin/staff") @ResponseBody Map<String,Object> createStaff(@Valid @RequestBody StaffService.Input input){return staff.save(null,input);}
+    @PostMapping("/api/admin/staff/{id}") @ResponseBody Map<String,Object> saveStaff(@PathVariable long id,@Valid @RequestBody StaffService.Input input){return staff.save(id,input);}
+    @PostMapping("/api/admin/staff/{id}/password") @ResponseBody Map<String,Object> resetPassword(@PathVariable long id,@Valid @RequestBody StaffService.PasswordInput input){staff.resetPassword(id,input);return Map.of("ok",true);}
+    @GetMapping("/api/admin/bills") @ResponseBody Map<String,Object> billHistory(
+            @RequestParam(required=false) @DateTimeFormat(iso=DateTimeFormat.ISO.DATE) LocalDate from,
+            @RequestParam(required=false) @DateTimeFormat(iso=DateTimeFormat.ISO.DATE) LocalDate to,
+            @RequestParam(defaultValue="opened") String dateType,@RequestParam(defaultValue="ALL") String status,
+            @RequestParam(defaultValue="") String q,@RequestParam(defaultValue="0") int page,@RequestParam(defaultValue="20") int size){return history.bills(from,to,dateType,status,q,page,size);}
+    @GetMapping("/api/admin/audit") @ResponseBody Map<String,Object> auditHistory(
+            @RequestParam(required=false) @DateTimeFormat(iso=DateTimeFormat.ISO.DATE) LocalDate from,
+            @RequestParam(required=false) @DateTimeFormat(iso=DateTimeFormat.ISO.DATE) LocalDate to,
+            @RequestParam(defaultValue="ALL") String type,@RequestParam(defaultValue="") String q,
+            @RequestParam(defaultValue="0") int page,@RequestParam(defaultValue="20") int size){return history.audit(from,to,type,q,page,size);}
+    @GetMapping("/api/admin/reports/sales") @ResponseBody Map<String,Object> salesReport(
+            @RequestParam(required=false) @org.springframework.format.annotation.DateTimeFormat(iso=org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate from,
+            @RequestParam(required=false) @org.springframework.format.annotation.DateTimeFormat(iso=org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate to) {
+        return reports.sales(from,to);
     }
     @PostMapping("/api/admin/categories") @ResponseBody Map<String,Object> addCategory(@Valid @RequestBody MenuService.CategoryInput input) { return menu.saveCategory(null,input); }
     @PostMapping("/api/admin/categories/{id}") @ResponseBody Map<String,Object> saveCategory(@PathVariable long id,@Valid @RequestBody MenuService.CategoryInput input) { return menu.saveCategory(id,input); }

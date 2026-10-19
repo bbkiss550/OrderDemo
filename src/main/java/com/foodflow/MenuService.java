@@ -13,7 +13,8 @@ import static org.springframework.http.HttpStatus.*;
 @Service
 public class MenuService {
     private final JdbcTemplate db;
-    public MenuService(JdbcTemplate db) { this.db=db; }
+    private final AuditService audit;
+    public MenuService(JdbcTemplate db,AuditService audit) { this.db=db;this.audit=audit; }
     public record CategoryInput(@NotBlank @Size(max=80) String name, @PositiveOrZero int sortOrder,
             boolean active, @PositiveOrZero long version) {}
     public record MenuInput(@NotBlank @Size(max=120) String name, @Positive long categoryId,
@@ -41,11 +42,13 @@ public class MenuService {
         if(((Number)rows.getFirst().get("version")).longValue()!=expected)throw new ResponseStatusException(CONFLICT,"รายการนี้ถูกแก้ไขแล้ว กรุณาอัปเดตข้อมูลก่อนบันทึกอีกครั้ง");
     }
     @Transactional public Map<String,Object> saveCategory(Long id,CategoryInput input) {
+        var before=id==null?null:audit.snapshot("CATEGORY",id);
         if(id==null)id=db.queryForObject("INSERT INTO food_categories(name,sort_order,active) VALUES (?,?,?) RETURNING id",Long.class,input.name.trim(),input.sortOrder,input.active);
         else {version("food_categories",id,input.version);db.update("UPDATE food_categories SET name=?,sort_order=?,active=?,version=version+1 WHERE id=?",input.name.trim(),input.sortOrder,input.active,id);}
-        return Map.of("id",id);
+        audit.record(before==null?"CREATE":"UPDATE","CATEGORY",id,before,audit.snapshot("CATEGORY",id));return Map.of("id",id);
     }
     @Transactional public Map<String,Object> saveMenu(Long id,MenuInput input) {
+        var before=id==null?null:audit.snapshot("MENU",id);
         var packages=new TreeSet<>(input.packageIds);
         if(packages.size()!=input.packageIds.size())throw new ResponseStatusException(CONFLICT,"เลือกแพ็กเกจซ้ำ");
         if(db.queryForList("SELECT id FROM food_categories WHERE id=? FOR SHARE",input.categoryId).isEmpty())throw new ResponseStatusException(CONFLICT,"ไม่พบหมวดหมู่ที่เลือก");
@@ -58,18 +61,22 @@ public class MenuService {
         else if(input.removeImage)db.update("UPDATE food_menus SET image_bytes=NULL,image_type=NULL WHERE id=?",id);
         db.update("DELETE FROM menu_packages WHERE menu_id=?",id);
         for(long packageId:packages)db.update("INSERT INTO menu_packages(menu_id,package_id) VALUES (?,?)",id,packageId);
-        return Map.of("id",id);
+        audit.record(before==null?"CREATE":"UPDATE","MENU",id,before,audit.snapshot("MENU",id));return Map.of("id",id);
     }
     @Transactional public void status(long id,StatusInput input) {
         version("food_menus",id,input.version);
+        var before=audit.snapshot("MENU",id);
         db.update("UPDATE food_menus SET active=?,version=version+1 WHERE id=?",input.active,id);
+        audit.record("STATUS","MENU",id,before,audit.snapshot("MENU",id));
     }
     @Transactional public void packageAccess(long id,long packageId,PackageAccess input) {
         if(db.queryForList("SELECT id FROM buffet_packages WHERE id=? FOR SHARE",packageId).isEmpty())throw new ResponseStatusException(NOT_FOUND,"ไม่พบแพ็กเกจ");
         version("food_menus",id,input.version);
+        var before=audit.snapshot("MENU",id);
         if(input.enabled)db.update("INSERT INTO menu_packages(menu_id,package_id) VALUES (?,?) ON CONFLICT DO NOTHING",id,packageId);
         else db.update("DELETE FROM menu_packages WHERE menu_id=? AND package_id=?",id,packageId);
         db.update("UPDATE food_menus SET version=version+1 WHERE id=?",id);
+        audit.record("PACKAGE_ACCESS","MENU",id,before,audit.snapshot("MENU",id));
     }
     public Image image(long id) {
         var rows=db.queryForList("SELECT image_bytes,image_type FROM food_menus WHERE id=? AND image_bytes IS NOT NULL",id);

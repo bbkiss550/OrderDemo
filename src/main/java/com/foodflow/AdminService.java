@@ -15,7 +15,8 @@ import static org.springframework.http.HttpStatus.*;
 @Service
 public class AdminService {
     private final JdbcTemplate db;
-    public AdminService(JdbcTemplate db) { this.db = db; }
+    private final AuditService audit;
+    public AdminService(JdbcTemplate db,AuditService audit) { this.db = db; this.audit=audit; }
     public record Settings(@NotBlank @Size(max=120) String name, boolean vatIncluded,
             @NotNull @DecimalMin("0") @DecimalMax("100") @Digits(integer=3,fraction=2) BigDecimal vatRate,
             @NotNull @DecimalMin("0") @DecimalMax("9999999") @Digits(integer=7,fraction=2) BigDecimal penalty,
@@ -59,6 +60,7 @@ public class AdminService {
         return b;
     }
     @Transactional public void saveSettings(Settings s) {
+        db.queryForList("SELECT id FROM shop_settings WHERE id=1 FOR UPDATE");var before=audit.snapshot("SETTINGS",1);
         if(s.paperMargin.compareTo(s.paperWidth.divide(BigDecimal.valueOf(2)))>=0) fail("ระยะขอบต้องน้อยกว่าครึ่งหนึ่งของความกว้างกระดาษ");
         try {
             var u=java.net.URI.create(s.publicBaseUrl);
@@ -66,8 +68,10 @@ public class AdminService {
         } catch(IllegalArgumentException e) { fail("URL ร้านไม่ถูกต้อง"); }
         db.update("UPDATE shop_settings SET name=?,vat_included=?,vat_rate=?,penalty=?,duration_minutes=?,paper_width=?,paper_margin=?,public_base_url=? WHERE id=1",
             s.name.trim(),s.vatIncluded,s.vatRate,s.penalty,s.durationMinutes,s.paperWidth,s.paperMargin,s.publicBaseUrl.replaceAll("/+$",""));
+        audit.record("UPDATE","SETTINGS",1,before,audit.snapshot("SETTINGS",1));
     }
     @Transactional public Map<String,Object> savePackage(Long id,PackageInput p) {
+        var before=id==null?null:audit.snapshot("PACKAGE",id);
         if(id==null) id=db.queryForObject("INSERT INTO buffet_packages(name,adult_price,child_price,active) VALUES (?,?,?,?) RETURNING id",Long.class,p.name.trim(),p.adultPrice,p.childPrice,p.active);
         else {
             var rows=db.queryForList("SELECT version FROM buffet_packages WHERE id=? FOR UPDATE",id);
@@ -75,7 +79,7 @@ public class AdminService {
             if(((Number)rows.getFirst().get("version")).longValue()!=p.version)fail("แพ็กเกจถูกแก้ไขแล้ว กรุณาอัปเดตข้อมูลก่อนบันทึก");
             db.update("UPDATE buffet_packages SET name=?,adult_price=?,child_price=?,active=?,version=version+1 WHERE id=?",p.name.trim(),p.adultPrice,p.childPrice,p.active,id);
         }
-        return Map.of("id",id);
+        audit.record(before==null?"CREATE":"UPDATE","PACKAGE",id,before,audit.snapshot("PACKAGE",id));return Map.of("id",id);
     }
     @Transactional public void saveTable(Long id,TableInput t) {
         if(id==null) db.update("INSERT INTO dining_tables(name,capacity,active) VALUES (?,?,?)",t.name.trim(),t.capacity,t.active);
@@ -116,6 +120,7 @@ public class AdminService {
             input.tableId,input.tableId,table.get("name"),qr,input.requestKey,input.durationMinutes,input.durationMinutes,s.get("name"),s.get("vat_included"),s.get("vat_rate"),totals.subtotal(),totals.vat(),totals.total(),s.get("penalty"),s.get("public_base_url"),input.packageId,plan.get("name"));
         if(input.adultQuantity>0)db.update("INSERT INTO bill_lines(bill_id,package_id,package_name,audience,price,quantity) VALUES (?,?,?,?,?,?)",id,input.packageId,plan.get("name"),"ADULT",adult,input.adultQuantity);
         if(input.childQuantity>0)db.update("INSERT INTO bill_lines(bill_id,package_id,package_name,audience,price,quantity) VALUES (?,?,?,?,?,?)",id,input.packageId,plan.get("name"),"CHILD",child,input.childQuantity);
+        audit.record("OPEN","BILL",id,null,audit.snapshot("BILL",id));
         return bill(id);
     }
     @Transactional public Map<String,Object> checkout(long id,Checkout c) {
@@ -123,9 +128,11 @@ public class AdminService {
         if(rows.isEmpty()) throw new ResponseStatusException(NOT_FOUND,"ไม่พบบิล");
         var b=rows.getFirst();
         if(!b.get("status").equals("OPEN")) fail("บิลนี้ชำระเงินแล้ว");
+        var before=audit.snapshot("BILL",id);
         var total=(BigDecimal)b.get("total");
         if(c.applyPenalty) total=total.add((BigDecimal)b.get("penalty_rate"));
         db.update("UPDATE bills SET status='PAID',penalty_applied=?,paid_total=?,paid_at=now(),payment_method=? WHERE id=?",c.applyPenalty,total,c.paymentMethod,id);
+        audit.record("CHECKOUT","BILL",id,before,audit.snapshot("BILL",id));
         return bill(id);
     }
     public Map<String,Object> customer(String token) {

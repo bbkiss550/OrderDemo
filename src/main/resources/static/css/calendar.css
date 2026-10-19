@@ -1,0 +1,14 @@
+.thai-date-display.form-control[readonly]{background-color:#fff;cursor:pointer;min-height:48px;font-size:16px}
+.flatpickr-calendar{font-family:inherit;font-size:16px;width:324px;max-width:calc(100vw - 24px);border-radius:12px}
+.flatpickr-calendar .flatpickr-months .flatpickr-month{height:48px}
+.flatpickr-calendar .flatpickr-current-month{padding-top:12px;font-size:16px}
+.flatpickr-calendar .flatpickr-current-month .flatpickr-monthDropdown-months{font-family:inherit;font-size:16px}
+.flatpickr-calendar .flatpickr-months :is(.flatpickr-prev-month,.flatpickr-next-month){height:48px;padding:14px}
+.flatpickr-calendar .flatpickr-weekdays{height:32px}
+.flatpickr-calendar .flatpickr-days,.flatpickr-calendar .dayContainer{width:100%;min-width:0;max-width:none}
+.flatpickr-calendar .flatpickr-day{max-width:none;flex-basis:14.2857%;height:44px;line-height:42px}
+.flatpickr-calendar .flatpickr-day:is(.selected,.startRange,.endRange){background:#696cff;border-color:#696cff}
+.thai-calendar-actions{display:flex;justify-content:space-between;gap:8px;padding:8px;border-top:1px solid #e7e7ef}
+.thai-calendar-actions button{min-height:44px;padding:8px 14px;background:#f3f3ff;color:#5557d8;border:0;border-radius:8px;font:inherit;cursor:pointer}
+.thai-calendar-actions button:focus-visible{outline:2px solid #696cff;outline-offset:2px}
+@media print{.flatpickr-calendar{display:none!important}}

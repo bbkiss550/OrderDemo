@@ -53,3 +53,7 @@
  .app-sidebar [data-nav] i{font-size:16px}
 }
 @media(prefers-reduced-motion:reduce){.app-sidebar{transition:none}}
+
+.app-sidebar .brand{min-width:0}
+.app-sidebar .brand-icon{flex-shrink:0}
+.app-sidebar #shopName{min-width:0;overflow-wrap:anywhere;line-height:1.35}

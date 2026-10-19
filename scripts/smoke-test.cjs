@@ -23,7 +23,7 @@ function settingsInput(s){return {name:s.name,vatIncluded:s.vat_included,vatRate
   const unauth=await request('/api/admin/state',undefined,{anonymous:true});assert.equal(unauth.status,302);
   const login=await request('/login');const html=await login.text();csrf=html.match(/name="_csrf"[^>]*value="([^"]+)"/)[1];
   const signed=await fetch(base+'/login',{method:'POST',headers:{Cookie:cookie,'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams({username:env.ADMIN_USERNAME||'admin',password:env.ADMIN_PASSWORD,_csrf:csrf}),redirect:'manual'});
-  assert.equal(signed.status,302);assert.equal(signed.headers.get('location'),base+'/admin');cookie=signed.headers.get('set-cookie').split(';')[0];
+  assert.equal(signed.status,302);assert(signed.headers.get('location').endsWith('/admin/reception'));cookie=signed.headers.get('set-cookie').split(';')[0];
   const admin=await request('/admin');const adminHtml=await admin.text();csrf=adminHtml.match(/name="_csrf" content="([^"]+)"/)[1];
   if(process.argv.includes('--auth-only')){assert.equal(admin.status,200);await json('/api/admin/state');console.log('PASS: configured admin credentials, login session and protected admin API');return;}
   let state=await json('/api/admin/state');originalSettings=settingsInput(state.settings);
@@ -42,14 +42,15 @@ function settingsInput(s){return {name:s.name,vatIncluded:s.vat_included,vatRate
   const editBusy=await request('/api/admin/tables/'+tableId,{name,capacity:6,active:true});assert.equal(editBusy.status,409);
   const qr=await request(`/admin/bills/${b.id}/qr`);assert.equal(qr.status,200);const bytes=Buffer.from(await qr.arrayBuffer());assert.equal(bytes.subarray(1,4).toString(),'PNG');
   const receipt=await request(`/admin/bills/${b.id}/receipt`);assert.equal(receipt.status,200);assert((await receipt.text()).includes('ใบเปิดบิล'));
-  const customer=await request('/order/'+b.qr_token,undefined,{anonymous:true});assert.equal(customer.status,200);assert((await customer.text()).includes('ยินดีต้อนรับ'));
+  const customer=await request('/order/'+b.qr_token,undefined,{anonymous:true});assert.equal(customer.status,200);assert((await customer.text()).includes('/js/customer.js'));
+  const customerState=await (await request('/order/'+b.qr_token+'/state',undefined,{anonymous:true})).json();assert.equal(customerState.bill.can_order,true);assert.equal(customerState.bill.id,b.id);
   await json('/api/admin/settings',{...originalSettings,vatIncluded:false,vatRate:10});const unchanged=await json('/api/admin/bills/'+b.id);assert.equal(Number(unchanged.total),Number(b.total));assert.equal(Number(unchanged.vat_rate),7);
   sql(`UPDATE bills SET opened_at=now()-interval '100 minutes',ends_at=now()-interval '10 minutes' WHERE id=${b.id};`);
   const expired=await json('/api/admin/bills/'+b.id);assert.equal(expired.expired,true);assert.equal(expired.status,'OPEN');
-  const expiredPage=await request('/order/'+b.qr_token,undefined,{anonymous:true});assert((await expiredPage.text()).includes('หมดเวลาสั่งอาหารแล้ว'));
+  const expiredState=await (await request('/order/'+b.qr_token+'/state',undefined,{anonymous:true})).json();assert.equal(expiredState.bill.can_order,false);assert.equal(expiredState.bill.status,'OPEN');
   const paid=await json(`/api/admin/bills/${b.id}/checkout`,{applyPenalty:false,paymentMethod:'CASH'});assert.equal(paid.status,'PAID');assert.equal(Number(paid.paid_total),Number(b.total));
   const doublePay=await request(`/api/admin/bills/${b.id}/checkout`,{applyPenalty:true,paymentMethod:'CASH'});assert.equal(doublePay.status,409);
-  const closedPage=await request('/order/'+b.qr_token,undefined,{anonymous:true});assert((await closedPage.text()).includes('บิลนี้สิ้นสุดแล้ว'));
+  const closedState=await (await request('/order/'+b.qr_token+'/state',undefined,{anonymous:true})).json();assert.equal(closedState.bill.status,'PAID');assert.equal(closedState.bill.can_order,false);
   const b2=await json('/api/admin/bills',{...input,requestKey:crypto.randomUUID()});billIds.push(b2.id);assert.notEqual(b2.qr_token,b.qr_token);
   assert.equal(Number(b2.total),Math.round((Number(adult.price)*2+Number(child.price)*3)*1.1*100)/100);
   const paid2=await json(`/api/admin/bills/${b2.id}/checkout`,{applyPenalty:true,paymentMethod:'TRANSFER'});assert.equal(Number(paid2.paid_total),Number(b2.total)+Number(b2.penalty_rate));

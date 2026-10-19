@@ -13,7 +13,8 @@ import static org.springframework.http.HttpStatus.*;
 public class FloorPlanService {
     private final JdbcTemplate db;
     private final AdminService admin;
-    public FloorPlanService(JdbcTemplate db, AdminService admin) { this.db=db; this.admin=admin; }
+    private final AuditService audit;
+    public FloorPlanService(JdbcTemplate db, AdminService admin,AuditService audit) { this.db=db; this.admin=admin;this.audit=audit; }
 
     public record FloorInput(@NotBlank @Size(max=80) String name,
             @Min(1) @Max(100) int rows, @Min(1) @Max(100) int columns, @PositiveOrZero long version) {}
@@ -101,9 +102,11 @@ public class FloorPlanService {
     }
     @Transactional public void availability(long id,Availability input) {
         lockTable(id);
+        var before=audit.snapshot("TABLE",id);
         if(hasOpenBill(id)) fail("โต๊ะยังมีบิลเปิดอยู่ กรุณาย้ายลูกค้าหรือปิดบิลก่อนปิดปรับปรุง");
         String reason=input.active?null:(input.reason==null||input.reason.isBlank()?"ปิดปรับปรุงชั่วคราว":input.reason.trim());
         db.update("UPDATE dining_tables SET active=?,closure_reason=? WHERE id=?",input.active,reason,id);
+        audit.record("AVAILABILITY","TABLE",id,before,audit.snapshot("TABLE",id));
     }
     private Map<String,Object> lockTable(long id) {
         var rows=db.queryForList("SELECT * FROM dining_tables WHERE id=? FOR UPDATE",id);
@@ -127,6 +130,7 @@ public class FloorPlanService {
         var bills=db.queryForList("SELECT * FROM bills WHERE id=? FOR UPDATE",id);
         if(bills.isEmpty())throw new ResponseStatusException(NOT_FOUND,"ไม่พบบิล");
         var bill=bills.getFirst();
+        var before=audit.snapshot("BILL",id);
         if(!bill.get("status").equals("OPEN")) fail("บิลชำระแล้ว ไม่สามารถย้ายโต๊ะได้");
         if(((Number)bill.get("table_id")).longValue()!=input.fromTableId) fail("บิลถูกย้ายไปแล้ว กรุณาเปิดข้อมูลบิลล่าสุด");
         var destination=tables.get(input.toTableId);
@@ -136,6 +140,7 @@ public class FloorPlanService {
         if(guests>((Number)destination.get("capacity")).intValue()) fail("โต๊ะปลายทางมีที่นั่งไม่เพียงพอ");
         db.update("INSERT INTO bill_table_moves(bill_id,from_table_id,to_table_id,from_table_name,to_table_name,moved_by,request_key) VALUES (?,?,?,?,?,?,?)",id,input.fromTableId,input.toTableId,bill.get("table_name"),destination.get("name"),actor,input.requestKey);
         db.update("UPDATE bills SET table_id=?,table_name=? WHERE id=?",input.toTableId,destination.get("name"),id);
+        audit.record("MOVE","BILL",id,before,audit.snapshot("BILL",id));
         return admin.bill(id);
     }
     private static void fail(String message) { throw new ResponseStatusException(CONFLICT,message); }

@@ -14,3 +14,35 @@ body[data-page="/admin/reception"] #editor .modal-footer{gap:12px}
 .page-heading-main{display:flex;align-items:center;gap:12px;min-width:0}
 .page-heading-main h1{min-width:0}
 .page-heading-main #menuToggle{flex-shrink:0;min-width:44px;min-height:44px}
+
+/* Keep the reception bill actions together, including tablet layouts. */
+body[data-page="/admin/reception"] #editor.bill-opening .modal-footer{display:flex;flex-wrap:nowrap;align-items:stretch}
+body[data-page="/admin/reception"] #editor.bill-opening .modal-footer>.btn{margin:0;min-width:0;min-height:64px}
+body[data-page="/admin/reception"] #editor.bill-opening .modal-footer>[data-bs-dismiss="modal"]{flex:0 0 auto}
+body[data-page="/admin/reception"] #editor.bill-opening #saveButton{flex:1 1 0;width:auto;white-space:normal}
+@media(max-width:420px){body[data-page="/admin/reception"] #editor.bill-opening .modal-footer{padding:16px;gap:8px}body[data-page="/admin/reception"] #editor.bill-opening .modal-footer>.btn{padding:12px;font-size:16px}}
+
+.selected-bill-table{display:flex;align-items:center;flex-wrap:wrap;gap:8px 14px;padding:14px 16px;background:#f5f4ff;border-radius:10px;color:#46536b}
+.selected-bill-table strong{font-size:22px;color:var(--ff-purple);overflow-wrap:anywhere}
+
+/* Touch controls in the opening-bill form, including tablet widths. */
+.qr-preview .qr-open-link{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px;margin-top:12px}
+#editor.bill-opening .modal-dialog{width:calc(100% - 32px);max-width:900px;margin-left:auto;margin-right:auto}
+#editor.bill-opening .bill-package-options{margin:0;padding:0;border:0;min-width:0}
+#editor.bill-opening .bill-package-options legend{float:none;width:auto;margin-bottom:12px;font-size:16px}
+.bill-package-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+.bill-package-option{position:relative;cursor:pointer;min-width:0;touch-action:manipulation}
+.bill-package-option>input{position:absolute;opacity:0;width:1px;height:1px}
+.bill-package-card{position:relative;display:flex;flex-direction:column;gap:8px;min-height:132px;height:100%;padding:18px;border:2px solid #e4e5ee;border-radius:14px;background:#fff;color:#46536b;overflow-wrap:anywhere}
+.bill-package-card>strong{font-size:21px;color:#28344a;padding-right:24px}
+.bill-package-card>span:not(.bill-package-check){display:flex;justify-content:space-between;gap:8px;font-size:16px}
+.bill-package-check{display:none;position:absolute;right:14px;top:14px;width:26px;height:26px;border-radius:50%;background:var(--ff-purple);color:#fff;text-align:center;line-height:26px;font-weight:700}
+.bill-package-option>input:checked+.bill-package-card{background:#f3f1ff;border-color:var(--ff-purple);box-shadow:0 0 0 1px var(--ff-purple)}
+.bill-package-option>input:checked+.bill-package-card .bill-package-check{display:block}
+.bill-package-option>input:focus-visible+.bill-package-card{outline:3px solid #413bc5;outline-offset:3px}
+#editor.bill-opening .guest-count-field>.form-label{font-size:17px;margin-bottom:12px}
+.guest-count-controls{display:grid;grid-template-columns:64px minmax(0,1fr) 64px;gap:8px}
+#editor.bill-opening .guest-count-controls .form-control{min-width:0;min-height:76px;text-align:center;font-size:32px;font-weight:700;padding:10px;appearance:textfield;-moz-appearance:textfield}
+#editor.bill-opening .guest-count-controls .form-control::-webkit-inner-spin-button,#editor.bill-opening .guest-count-controls .form-control::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
+#editor.bill-opening .guest-count-controls .btn{min-height:76px;min-width:64px;font-size:32px;padding:8px;touch-action:manipulation}
+@media(max-width:420px){#editor.bill-opening .modal-dialog{width:calc(100% - 20px)}.bill-package-grid{grid-template-columns:minmax(0,1fr)}}

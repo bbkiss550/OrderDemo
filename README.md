@@ -2,22 +2,26 @@
 
 ระบบแอดมิน: ตั้งค่าร้าน แพ็กเกจเด็ก/ผู้ใหญ่ หมวดหมู่และเมนูอาหารแยกแพ็กเกจ ผังโต๊ะหลายชั้น เปิดบิล ย้ายบิล ออก QR พิมพ์ใบเปิดบิล และบันทึกชำระเงิน ตาม `KICKOFF.md`
 
+ลูกค้าสแกน QR เพื่อเลือกและส่งอาหารจริงได้หลายรอบ หลังบ้านดูรายการ และหน้าครัว KDS เปลี่ยนสถานะรายเมนู/ทั้งรอบถึงเสิร์ฟแล้ว
+
 ใช้ Sneat 1.0.0, Spring Boot, Thymeleaf, Bootstrap 5, PostgreSQL และ Java 21 บน Docker
 
 ## Docker: ใช้ฐานข้อมูลเดิมบน Windows
 
 คัดลอก `.env.example` เป็น `.env` แล้วระบุรหัสผ่านฐานข้อมูลและ ADMIN_PASSWORD (ไฟล์นี้ไม่เข้า Git และไม่เข้า Docker image)
 
-สำหรับฐานข้อมูลใหม่ รัน SQL ทั้งสี่ไฟล์ตามลำดับด้วยตนเองก่อนเริ่มแอป:
+สำหรับฐานข้อมูลใหม่ รัน SQL ทั้งหกไฟล์ตามลำดับด้วยตนเองก่อนเริ่มแอป:
 
 ```powershell
 & 'C:\Program Files\PostgreSQL\17\bin\psql.exe' -h localhost -p 5432 -U postgres -d db_order_demo -W -v ON_ERROR_STOP=1 -f .\sql\001_admin.sql
 & 'C:\Program Files\PostgreSQL\17\bin\psql.exe' -h localhost -p 5432 -U postgres -d db_order_demo -W -v ON_ERROR_STOP=1 -f .\sql\002_floor_plan.sql
 & 'C:\Program Files\PostgreSQL\17\bin\psql.exe' -h localhost -p 5432 -U postgres -d db_order_demo -W -v ON_ERROR_STOP=1 -f .\sql\003_menu_catalog.sql
 & 'C:\Program Files\PostgreSQL\17\bin\psql.exe' -h localhost -p 5432 -U postgres -d db_order_demo -W -v ON_ERROR_STOP=1 -f .\sql\004_single_package_bills.sql
+& 'C:\Program Files\PostgreSQL\17\bin\psql.exe' -h localhost -p 5432 -U postgres -d db_order_demo -W -v ON_ERROR_STOP=1 -f .\sql\005_staff_audit_history.sql
+& 'C:\Program Files\PostgreSQL\17\bin\psql.exe' -h localhost -p 5432 -U postgres -d db_order_demo -W -v ON_ERROR_STOP=1 -f .\sql\006_food_orders.sql
 ```
 
-ไฟล์เหล่านี้รันครั้งเดียว ในเครื่องปัจจุบันรันทั้งสี่แล้ว ฐานข้อมูลเดิมให้รันเฉพาะไฟล์ที่ยังไม่ได้รันตามลำดับ ก่อนใช้โค้ดรุ่นใหม่ หยุดแอปก่อนอัปเกรด schema และสำรองฐานข้อมูลด้วย pg_dump
+ไฟล์เหล่านี้รันครั้งเดียว ในเครื่องปัจจุบันรันทั้งหกแล้ว ฐานข้อมูลเดิมให้รันเฉพาะไฟล์ที่ยังไม่ได้รันตามลำดับ ก่อนใช้โค้ดรุ่นใหม่ หยุดแอปก่อนอัปเกรด schema และสำรองฐานข้อมูลด้วย pg_dump
 
 ```powershell
 docker compose up --build -d
@@ -48,7 +52,7 @@ docker compose up --build -d
 
 ค้นหาชื่อ/คำอธิบาย/หมวดหมู่อัตโนมัติ กรองตามหมวดหมู่หรือแพ็กเกจ และเปิด–ปิดขายผ่านสวิตช์ได้ หากรายการถูกแก้ไขพร้อมกัน ระบบปฏิเสธข้อมูลเก่าให้โหลดล่าสุดก่อนบันทึก ใช้ Modal/AJAX และไม่ใช้ query parameters
 
-เริ่มต้นไม่มีอาหารจริง ให้แอดมินเพิ่มรายการและเลือกแพ็กเกจของร้านเอง ระยะนี้เป็นหน้าจัดการข้อมูลอาหาร; การนำสิทธิ์แพ็กเกจไปตรวจออเดอร์ลูกค้าจะต่อในระยะหน้าสั่งอาหาร/ครัว
+มีรายการอาหารตัวอย่างตามไฟล์ data/demo-menu-catalog.json แอดมินปรับรายการและสิทธิ์แพ็กเกจได้ ระบบ QR ตรวจสิทธิ์แพ็กเกจ หมวดหมู่ และสถานะอาหารทุกครั้งที่ส่งออเดอร์
 
 ## การใช้ผังโต๊ะ
 
@@ -66,7 +70,7 @@ docker compose up --build -d
 
 ระบบตรวจพื้นที่ทับกัน/หลุดขอบเขต ขนาดผังที่ตัดโต๊ะ และข้อมูลที่ถูกแก้ไขพร้อมกัน หากมีคนบันทึกก่อนต้องโหลดผังล่าสุดแล้วแก้ใหม่
 
-QR เป็นรหัสสุ่มแยกบิล เปิดดูข้อมูลการใช้บริการได้จริง สถานะหมดเวลา/ปิดบิลตรวจจากเซิร์ฟเวอร์ ระยะนี้ยังไม่มีเมนูสั่งอาหารหรือ KDS หน้าลูกค้าจะแจ้งให้สั่งกับพนักงาน
+QR เป็นรหัสสุ่มแยกบิล ลูกค้าเลือกอาหาร ส่งตะกร้าจริงได้หลายรอบ และดูสถานะอาหารร่วมกับทุกเครื่องในโต๊ะ บิลหมดเวลาหรือปิดแล้วส่งรอบใหม่ไม่ได้ ดูกระดานครัวที่ /admin/kds และรายการหลังบ้านที่ /admin/orders รายละเอียดใน [Customer Quick Order และ KDS](docs/QUICK_ORDER_KDS.md)
 
 ## ทดสอบ QR จากโทรศัพท์ในร้าน
 
@@ -88,6 +92,8 @@ Get-Content -Raw .\sql\001_admin.sql | docker compose -f compose.yml -f compose.
 Get-Content -Raw .\sql\002_floor_plan.sql | docker compose -f compose.yml -f compose.database.yml exec -T database psql -U postgres -d db_order_demo -v ON_ERROR_STOP=1
 Get-Content -Raw .\sql\003_menu_catalog.sql | docker compose -f compose.yml -f compose.database.yml exec -T database psql -U postgres -d db_order_demo -v ON_ERROR_STOP=1
 Get-Content -Raw .\sql\004_single_package_bills.sql | docker compose -f compose.yml -f compose.database.yml exec -T database psql -U postgres -d db_order_demo -v ON_ERROR_STOP=1
+Get-Content -Raw .\sql\005_staff_audit_history.sql | docker compose -f compose.yml -f compose.database.yml exec -T database psql -U postgres -d db_order_demo -v ON_ERROR_STOP=1
+Get-Content -Raw .\sql\006_food_orders.sql | docker compose -f compose.yml -f compose.database.yml exec -T database psql -U postgres -d db_order_demo -v ON_ERROR_STOP=1
 docker compose -f compose.yml -f compose.database.yml up --build -d app
 ```
 
@@ -110,3 +116,51 @@ docker compose down
 - `scripts/migration-single-package-check.sql` รันกับ psql เพื่อตรวจ schema ติดตั้งใหม่/การคงบิลเก่า/การย้ายสิทธิ์เมนูและ constraint ใน schema ทดสอบแยก ล้าง schema ของตนเมื่อผ่าน
 - `node scripts/smoke-test.cjs` ตรวจ auth, CSRF, validation, หนึ่งแพ็กเกจพร้อมผู้ใหญ่/เด็ก, snapshot ราคา/VAT, idempotency, concurrent opening, QR, ใบเปิดบิล, หมดเวลา, ค่าปรับ, การปิดบิล และสร้าง QR ใหม่ ใช้ฐานข้อมูลเดิมบน Windows และล้างเฉพาะข้อมูลที่สคริปต์สร้างเอง
 - บัญชีระยะแรกมี ADMIN จาก environment; การจัดการพนักงานและสิทธิ์แยกบทบาทอยู่ในระยะถัดไป
+
+## เมนูอาหารตัวอย่าง
+
+ฐานข้อมูล localhost เพิ่มเมนูตัวอย่างครบ 8 หมวดเมื่อ 19 ตุลาคม 2026: เนื้อ 10, หมู 10, ทะเล 12, ลูกชิ้น 10, ผัก 14, เส้น 8, ของหวาน 10 และเครื่องดื่ม 10 รวม 84 รายการ โดยเพิ่มใหม่ 83 และเก็บริบอายเดิมไว้
+
+ข้อมูลต้นฉบับอยู่ใน `data/demo-menu-catalog.json` พร้อมคำอธิบาย ไอคอน และแพ็กเกจขั้นต่ำ เมนูตัวอย่างระดับ Standard เปิดให้ Standard/Deluxe/Premium ระดับ Deluxe เปิดให้ Deluxe/Premium และระดับ Premium เปิดให้ Premium แก้สวิตช์แต่ละเมนูภายหลังได้
+
+```powershell
+# ดูรายการที่จะเพิ่ม (ไม่เปลี่ยนฐานข้อมูล)
+node scripts/seed-demo-menus.cjs
+# เพิ่มเฉพาะรายการที่ยังไม่มี ผ่าน admin API ของ localhost
+node scripts/seed-demo-menus.cjs --apply
+```
+
+ต้องมีหมวดหมู่ทั้ง 8 และแพ็กเกจ Standard/Deluxe/Premium ก่อน สคริปต์อ่านข้อมูลเชื่อมต่อจาก .env ตรวจรายการทั้งหมดก่อนเริ่มเพิ่ม และไม่เขียนทับเมนูหรือสิทธิ์แพ็กเกจที่มีอยู่แล้ว รันซ้ำได้โดยไม่เพิ่มรายการเดิมซ้ำ
+
+## รายงานยอดขาย
+
+เปิดเมนู **รายงานยอดขาย** (`/admin/reports`) เลือกวันที่เริ่ม–สิ้นสุด หรือปุ่มวันนี้ / 7 วันล่าสุด / เดือนนี้ แสดงยอดรับชำระ จำนวนบิล ลูกค้าผู้ใหญ่–เด็ก ยอดเฉลี่ยต่อบิล VAT ค่าปรับ และตารางรายวัน ช่องทางชำระ และแพ็กเกจ
+
+รายงานนับตามวันที่รับชำระในเวลาไทย เฉพาะบิลที่ชำระแล้ว ใช้ราคากับ VAT ที่บันทึกไว้ในบิล เลือกได้สูงสุดครั้งละ 366 วัน ไม่แก้ข้อมูลเดิมและไม่ต้องรัน migration
+
+ตรวจรายงานด้วย `node scripts/report-smoke.cjs` (ต้องมี PostgreSQL client และแอป localhost) หรือ `--sql-only` เพื่อตรวจ SQL ด้วยตารางชั่วคราวที่ rollback โดยไม่เปลี่ยนบิลจริง
+
+หน้ารายงานมีปุ่ม **พิมพ์รายงาน** เปิดหน้าต่างพิมพ์ของเบราว์เซอร์ ใช้ช่วงวันที่ของรายงานที่แสดงอยู่ พร้อมชื่อร้านและเวลาพิมพ์เวลาไทย มี print CSS สำหรับ A4 แนวตั้ง ซ่อนเมนู ตัวกรอง และปุ่มควบคุม สามารถเลือกบันทึกเป็น PDF จากหน้าต่างพิมพ์ได้
+
+## บัญชีพนักงาน บิลย้อนหลัง และประวัติการแก้ไข
+
+ฐานข้อมูลเดิมต้องรัน `sql/005_staff_audit_history.sql` ก่อนใช้รุ่นนี้ เครื่อง localhost ปัจจุบันรันแล้ว และมี private backup ก่อน migration ใน `.runtime/backups/`
+
+- `/admin/staff`: แอดมินเพิ่มบัญชี กำหนดชื่อแสดงผล สิทธิ์ เปิด–ปิดบัญชี และตั้งรหัสผ่านใหม่ได้ บัญชีใหม่ใช้รหัสผ่านอย่างน้อย 8 ตัวอักษร ไม่เกิน 72 ไบต์ ชื่อผู้ใช้ใช้ A-Z, a-z, 0-9, จุด ขีดกลาง และขีดล่าง 3–60 ตัวอักษร
+- ADMIN จัดการร้านทั้งหมดและอ่านรายงาน/ประวัติ, CASHIER รับลูกค้า เปิดบิล ย้ายโต๊ะ ปิดรับโต๊ะ ชำระเงิน และค้นบิลย้อนหลัง, KITCHEN ใช้ `/admin/kds` จัดคิวและสถานะอาหาร และ `/admin/kitchen` เปิด–ปิดอาหาร ไม่มีสิทธิ์ยอดเงิน ราคา หรือแก้ตั้งค่าร้าน ทั้ง ADMIN/CASHIER ดูรายการอาหารได้ โดยแคชเชียร์ยืนยันเสิร์ฟเฉพาะ READY
+- ปิดบัญชี เปลี่ยนสิทธิ์ หรือตั้งรหัสผ่านใหม่แล้ว เซสชันเก่าจะถูกปฏิเสธตั้งแต่คำขอหลังบ้านครั้งถัดไป ป้องกันการเปลี่ยนสิทธิ์/ปิดบัญชีตนเอง และป้องกันแอดมินที่ใช้งานได้คนสุดท้าย
+- `/admin/bills`: ค้นทั้งฐานข้อมูลด้วยเลขบิล/โต๊ะ สถานะ วันเปิดบิลหรือวันรับชำระตามเวลาไทย แบ่งหน้า 20/50/100 รายการ เว้นวันที่เพื่อค้นทั้งหมด
+- `/admin/audit`: แอดมินค้นตามวันที่ ชื่อผู้ใช้ และประเภทรายการ ดูค่าก่อน–หลังของราคาแพ็กเกจ หมวดหมู่ เมนู สิทธิ์เมนู การตั้งค่าร้าน บัญชีพนักงาน และการทำงานเปิด/ชำระ/ย้ายบิลกับเปิด–ปิดโต๊ะ บันทึกเริ่มตั้งแต่เปิดใช้รุ่นนี้ ไม่มีข้อมูลย้อนหลังของการแก้ไขก่อน migration ไม่มีหน้าลบประวัติ และไม่บันทึกรหัสผ่านหรือเนื้อไฟล์ภาพ
+
+ADMIN_USERNAME/ADMIN_PASSWORD ใน `.env` ใช้สร้างแอดมินเริ่มต้นเฉพาะเมื่อยังไม่มีบัญชีในฐานข้อมูล หลังจากนั้นบัญชีอยู่ใน `staff_users` และการแก้ `.env` จะไม่เขียนทับรหัสผ่านในฐานข้อมูล บัญชี `admin` เดิมของเครื่องนี้ยังเข้าได้ตามเดิม
+
+ตรวจด้วย `node scripts/staff-history-smoke.cjs` ซึ่งสร้างเฉพาะข้อมูล QA ชั่วคราวแล้วล้างข้อมูลของตนเอง ทดสอบการจำกัดสิทธิ์และการเพิกถอนเซสชันจริง
+
+
+## Customer Quick Order และ KDS
+
+เปิดบิลและสแกน QR ตามเดิม เลือกอาหารตามแพ็กเกจด้วยปุ่ม +/- ตรวจตะกร้าแล้วส่งเข้าครัว หน้าลูกค้าและหลังบ้านอัปเดตอัตโนมัติทุก 3 วินาที หลังบ้านดูออเดอร์ที่ /admin/orders หรือกดออเดอร์อาหารจากรายละเอียดบิล
+
+หน้าครัว /admin/kds เปลี่ยนได้ทั้งทีละเมนูและทั้งรอบ: รอรับ → กำลังทำ → พร้อมเสิร์ฟ → เสิร์ฟแล้ว แคชเชียร์ยืนยันเสิร์ฟได้เฉพาะอาหารที่พร้อมแล้ว บัญชีครัวเข้า KDS หลัง login ส่วนเปิด–ปิดอาหารยังอยู่ที่ /admin/kitchen
+
+รัน SQL manual 006 หลัง 001–005 ก่อนใช้รุ่นนี้ [รายละเอียด API การทำงานและขอบเขต](docs/QUICK_ORDER_KDS.md) ทดสอบด้วย node scripts/order-smoke.cjs ตาม dependency ในหัวสคริปต์ ทดสอบ DOM ด้วย jsdom ยังไม่ได้ตรวจบน iPad/LAN จริง

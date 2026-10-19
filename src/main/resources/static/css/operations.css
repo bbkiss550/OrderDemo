@@ -1,0 +1,10 @@
+.history-fields{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+.history-fields>div{min-width:0}
+.history-buttons,.history-pagination{display:flex;align-items:center;flex-wrap:wrap;gap:12px;margin-top:20px}
+.history-pagination{justify-content:space-between}
+body:is([data-page="/admin/staff"],[data-page="/admin/audit"],[data-page="/admin/bills"],[data-page="/admin/kitchen"]) .btn{min-height:44px}
+.history-fields .form-control,.history-fields .form-select{min-height:48px;font-size:16px}
+.audit-value{white-space:pre-wrap;overflow-wrap:anywhere;max-width:280px}
+.app-sidebar{overflow-y:auto}
+@media(max-width:800px){.history-fields{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:500px){.history-fields{grid-template-columns:minmax(0,1fr)}}

@@ -1,6 +1,6 @@
 # FoodFlow — CODEX Handoff
 
-> อัปเดตสถานะ ณ วันที่ 8 ตุลาคม 2026 หลังนำต้นแบบ `FoodFlow_QuickOrder_V2_Codex` มาพัฒนาเป็นระบบจริงกับ Codex
+> อัปเดตสถานะ ณ วันที่ 19 ตุลาคม 2026 หลังนำต้นแบบ `FoodFlow_QuickOrder_V2_Codex` มาพัฒนาเป็นระบบจริงกับ Codex
 
 ## 1. Repository และสถานะอ้างอิง
 
@@ -66,20 +66,20 @@ FoodFlow เริ่มจากต้นแบบ Frontend แบบ HTML/CSS/
 | หมวดหมู่ | พัฒนาแล้ว |
 | เมนูอาหาร | พัฒนาแล้ว |
 | สิทธิ์อาหารแยกแพ็กเกจ | พัฒนาแล้ว |
-| Customer QR landing | พัฒนาแล้วเฉพาะข้อมูลบิล/เวลา/สถานะ |
-| Customer Quick Order | **ยังไม่พัฒนา** |
-| ตะกร้าส่งอาหารจริง | **ยังไม่พัฒนา** |
-| order_round | **ยังไม่พัฒนา** |
-| Multi-device ordering | **ยังไม่พัฒนา** |
-| Kitchen Display System (KDS) | **ยังไม่พัฒนา** |
-| Real-time order updates | **ยังไม่พัฒนา** |
-| สถานะอาหารรายรายการ | **ยังไม่พัฒนา** |
+| Customer QR landing | เมนู/ตะกร้า/ส่งออเดอร์/ประวัติ/เวลา |
+| Customer Quick Order | พัฒนาแล้ว ดู docs/QUICK_ORDER_KDS.md |
+| ตะกร้าส่งอาหารจริง | พัฒนาแล้ว ดู docs/QUICK_ORDER_KDS.md |
+| order_round | พัฒนาแล้ว ดู docs/QUICK_ORDER_KDS.md |
+| Multi-device ordering | พัฒนาแล้ว ดู docs/QUICK_ORDER_KDS.md |
+| Kitchen Display System (KDS) | พัฒนาแล้ว ดู docs/QUICK_ORDER_KDS.md |
+| Real-time order updates | polling ทุก 3 วินาที ยังไม่มี WebSocket/SSE |
+| สถานะอาหารรายรายการ | พัฒนาแล้ว ดู docs/QUICK_ORDER_KDS.md |
 | เรียกพนักงาน | **ยังไม่พัฒนา** |
-| พนักงานหลายบัญชี / แยก Role | **ยังไม่พัฒนา** |
-| รายงาน | **ยังไม่พัฒนา** |
+| พนักงานหลายบัญชี / แยก Role | พัฒนาแล้ว ADMIN / CASHIER / KITCHEN พร้อมเพิกถอนเซสชัน |
+| รายงาน | รายงานยอดขายตามวันที่รับชำระ พร้อม VAT ค่าปรับ ช่องทางชำระ และแพ็กเกจ |
 | Payment gateway / online payment | **ไม่มีและยังไม่ใช่ระบบรับเงินจริงออนไลน์** |
 
-**ห้ามอธิบายว่าระบบสั่งอาหารผ่านมือถือหรือ KDS เสร็จแล้วในสถานะปัจจุบัน**
+ระบบ QR ordering และ KDS มี implementation และตรวจ API/DOM แล้ว ยังไม่ได้ตรวจภาพบน iPad จริงหรือการสแกนจากโทรศัพท์ใน LAN
 
 ---
 
@@ -116,6 +116,8 @@ SQL ปัจจุบัน:
 2. `sql/002_floor_plan.sql`
 3. `sql/003_menu_catalog.sql`
 4. `sql/004_single_package_bills.sql`
+5. `sql/005_staff_audit_history.sql`
+6. `sql/006_food_orders.sql`
 
 ### 4.4 Security
 
@@ -306,6 +308,8 @@ SQL manual ปัจจุบัน:
 - `sql/002_floor_plan.sql`
 - `sql/003_menu_catalog.sql`
 - `sql/004_single_package_bills.sql`
+- `sql/005_staff_audit_history.sql`
+- `sql/006_food_orders.sql`
 
 Backup: `db/dump-db_order_demo-202610081600.backup`
 
@@ -322,7 +326,7 @@ Restore instruction อยู่ใน `db/README.md`
 
 - `pg_restore --list` ผ่าน
 - ถอด archive เป็น SQL ผ่าน
-- **ยังไม่ได้ทดลอง restore ลงฐานข้อมูลจริง**
+- ทดสอบ restore ลงฐานข้อมูล PostgreSQL QA ใหม่จริงแล้ว 19 ตุลาคม 2026 และอัปเกรด 005/006 ผ่าน ต้องใช้คำสั่งใน db/README.md ที่แก้เรื่อง public schema แล้ว ไม่ได้ restore ทับฐานข้อมูลร้าน
 
 อย่าเขียนว่า restore test ผ่านจนกว่าจะได้ทดสอบ restore ลง database จริง
 
@@ -364,143 +368,26 @@ Restore instruction อยู่ใน `db/README.md`
 - การสแกน QR จากโทรศัพท์บน LAN
 - mobile visual QA แบบครบถ้วน
 - PostgreSQL container mode แบบใช้งานจริง
-- restore backup ลง database จริง
-- Customer Quick Order
-- KDS
-- real-time ordering
+- ทดสอบกู้คืนเมื่อเครื่องเสียทั้งเครื่องและเวลาที่ใช้กู้คืน
+- WebSocket/SSE และการทดสอบโหลดระยะยาว
 
 ---
 
-## 13. สิ่งที่ยังไม่ได้พัฒนา
+## 13. Customer Quick Order และ KDS ที่พัฒนาแล้ว
 
-### 13.1 Customer Quick Order
+ดู [รายละเอียดการใช้งาน API และข้อมูล](docs/QUICK_ORDER_KDS.md) รุ่นนี้ใช้ SQL manual 006 เพิ่ม order_rounds/order_items หลัง 005 มีการตรวจสิทธิ์จากบิล ป้องกันการส่งซ้ำและ concurrency เก็บ snapshot อาหาร และบันทึก audit
 
-ปัจจุบัน QR landing แสดงข้อมูลบิล โต๊ะ เวลา สถานะหมดเวลา และสถานะบิล แต่ยังไม่มี:
+## 14. สถานะอาหารที่ผู้ใช้ยืนยัน
 
-- รายการอาหารที่สั่งได้จริง
-- ปุ่ม +/- ที่เชื่อม Backend
-- ตะกร้าจริง
-- การส่งออเดอร์
-- order round
-- order items
-- ประวัติการสั่งอาหารจริง
-- การสั่งพร้อมกันหลายอุปกรณ์
+เปลี่ยนได้ทั้งทีละเมนูและทั้งรอบ PENDING → COOKING → READY → SERVED สถานะรอบอิงขั้นที่ยังค้างน้อยที่สุด ปุ่มรวมไม่ลดขั้นเมนูที่ทำไปแล้ว แคชเชียร์ยืนยันเสิร์ฟเฉพาะ READY; ครัวและแอดมินทำได้ทุกขั้น
 
-### 13.2 Kitchen Display System
+## 15. การอัปเดตและขอบเขต
 
-ยังไม่มี KDS, คิวออเดอร์เข้าครัว, real-time update, สถานะอาหารรายรายการ, รับออเดอร์, กำลังปรุง, พร้อมเสิร์ฟ และประวัติฝั่งครัว
+ลูกค้าและหลังบ้าน polling ทุก 3 วินาที พร้อมโหลดใหม่เมื่อกลับมาเปิดหน้า ใช้ข้อมูลเซิร์ฟเวอร์ทุกครั้ง ไม่มี WebSocket/SSE การเปลี่ยนสถานะใช้ version/lock ป้องกันสองจอกดทับกัน ยังไม่มีเรียกพนักงาน ยกเลิกออเดอร์ ย้อนสถานะ เสิร์ฟบางจานในรายการเดียวกัน หรือ payment gateway
 
-### 13.3 ส่วนอื่น
+## 16. การพัฒนารอบถัดไป
 
-ยังไม่มีระบบเรียกพนักงาน, พนักงานหลายบัญชี, role/permission แยกหน้าที่, รายงาน และ payment gateway
-
----
-
-## 14. งานถัดไป: Customer Quick Order
-
-> ส่วนนี้คือ **แผนพัฒนารอบถัดไป** ไม่ใช่การประกาศว่า feature ถูกพัฒนาแล้ว และไม่เพิ่ม business requirement ใหม่เกินจากสิ่งที่ยืนยันไว้
-
-### Phase CQ-1 — Data model และ SQL manual
-
-ออกแบบ schema สำหรับการสั่งอาหารจริงให้รองรับ:
-
-- บิลเป็น session หลักของโต๊ะ
-- ลูกค้าส่งอาหารได้หลายรอบ
-- แต่ละรอบผูกกับบิล
-- แต่ละรายการอาหารผูกกับรอบ
-- idempotency กันการกดส่งซ้ำ
-- snapshot ที่จำเป็นเพื่อให้ประวัติออเดอร์ไม่เสียเมื่อชื่อเมนูถูกแก้ภายหลัง
-
-จัดทำ SQL manual script ถัดจาก 004 และตรวจความเข้ากันได้กับ SQL 001–004/ข้อมูลเดิมก่อน finalize
-
-### Phase CQ-2 — Customer menu read API / server rendering
-
-เมื่อสแกน QR Backend ต้องตรวจทุกครั้ง:
-
-1. QR/token ถูกต้อง
-2. บิลยังใช้งานได้
-3. บิลยังไม่ปิด
-4. ยังไม่หมดเวลาสั่ง
-5. package ของบิลเป็นตัวกำหนดสิทธิ์อาหาร
-6. category active
-7. menu item active/ขายได้
-8. menu item เปิดสำหรับ package ของบิล
-
-อย่าเชื่อค่าจาก client ว่าเมนูใดสั่งได้
-
-ยึด screenshots เดิมของ `FoodFlow_QuickOrder_V2_Codex` เป็น UX/UI หลัก โดยเน้น Mobile first, หมวดหมู่เข้าถึงเร็ว, รายการอาหารอ่านง่าย, ปุ่ม +/- สำหรับ Quick Order, ไม่บังคับเปิด option/detail สำหรับอาหารทั่วไป และตะกร้าเห็นง่าย
-
-### Phase CQ-3 — Cart และ Submit Order
-
-Frontend เก็บ state ของตะกร้าระหว่างเลือกได้ แต่ Backend เป็นผู้ตัดสินตอน submit
-
-เมื่อ submit:
-
-- ใช้ idempotency key
-- validate bill/token อีกครั้ง
-- validate expiry อีกครั้ง
-- validate category/menu/package eligibility อีกครั้ง
-- validate quantities
-- สร้าง order round และ items แบบ atomic transaction
-- retry request เดิมต้องไม่สร้างออเดอร์ซ้ำ
-
-หลัง submit สำเร็จ round ที่ส่งแล้วต้องเป็นประวัติ และเริ่มตะกร้ารอบถัดไปได้ถ้าบิลยังสั่งได้
-
-### Phase CQ-4 — Multi-device / concurrency
-
-ทดสอบ QR เดียวหลายเครื่อง, ส่งคนละ round พร้อมกัน, retry, เมนู/หมวดหมู่ถูกปิดระหว่างเลือก, บิลหมดเวลาหรือถูก checkout ระหว่างเปิดหน้ากับกดส่ง และกรณี master package ถูกแก้โดย Backend ต้องเป็นจุดตัดสินสุดท้าย
-
-### Phase CQ-5 — Customer history/status
-
-ต่อหน้าประวัติการสั่งจากข้อมูลจริงแทน prototype/LocalStorage และอย่าแสดงสถานะที่ระบบยังไม่มีจริง
-
----
-
-## 15. งานถัดไปหลัง Customer Quick Order: KDS
-
-> KDS เริ่มหลังจาก order model และ submit flow ของ Customer Quick Order มีข้อมูลจริงแล้ว
-
-### Phase KDS-1 — Kitchen queue
-
-สร้างหน้าครัวจาก order round/order item จริง ยึด UX/UI screenshots เดิมเป็น reference หลัก และแสดงโต๊ะปัจจุบัน รอบการสั่ง เวลา รายการ และจำนวน
-
-กรณีย้ายโต๊ะ KDS ต้องอ้างโต๊ะปัจจุบันของบิล
-
-### Phase KDS-2 — Order/item status
-
-ออกแบบ lifecycle/API สำหรับสถานะครัวให้สอดคล้องกับ UX/UI ที่ยืนยันในรอบพัฒนา KDS ก่อน implement ต้องตรวจว่าระดับสถานะจะเป็นทั้ง order round, ราย item หรือทั้งสองแบบตาม requirement ที่ผู้ใช้ยืนยันในรอบนั้น
-
-**อย่าสร้าง business rule ใหม่โดยถือว่าได้รับการยืนยันแล้วเอง**
-
-### Phase KDS-3 — Real-time
-
-เมื่อ model/status ชัดเจนแล้วค่อยเชื่อม real-time ระหว่าง Customer status, Kitchen queue และ Admin/หน้าร้านที่เกี่ยวข้อง
-
-WebSocket/SSE เป็น implementation choice ตามความเหมาะสมทางเทคนิค และ Backend/database ต้องเป็น source of truth
-
-### Phase KDS-4 — Concurrency และ recovery
-
-ทดสอบครัวหลายหน้าจอ, กดสถานะพร้อมกัน, reconnect, refresh, event หลุด/ซ้ำ และการเปลี่ยนสถานะจากหน้าจออื่น หลัง reconnect ต้องโหลด state ล่าสุดจาก Backend ได้
-
----
-
-## 16. เกณฑ์ก่อนเริ่มรอบถัดไป
-
-ก่อน Codex ลงมือ Customer Quick Order ให้:
-
-1. อ่านเอกสารนี้
-2. อ่าน `docs/VERIFICATION.md`
-3. อ่าน `docs/MENU_REQUIREMENTS.md`
-4. อ่าน schema/SQL 001–004 ปัจจุบัน
-5. ตรวจ model ของ bill/package/menu ใน code จริง
-6. ตรวจ screenshots เดิม 01–10 สำหรับ Customer UX/UI
-7. เสนอ schema/API/flow ที่จะเพิ่มโดยไม่ทำลายข้อมูลเดิม
-8. แยกให้ชัดว่าอะไรเป็น requirement ที่ยืนยันแล้ว และอะไรเป็น implementation proposal
-9. รอการยืนยันเฉพาะกรณีพบ business decision ใหม่ที่ไม่มีคำตอบในเอกสารเดิม
-
-**ห้ามเปลี่ยน requirement หนึ่งแพ็กเกจต่อบิลกลับเป็นหลายแพ็กเกจ**
-
----
+อ่านเอกสารนี้ docs/QUICK_ORDER_KDS.md และ docs/VERIFICATION.md พร้อม SQL 001–006 ก่อนแก้ไข ยึด screenshots ต้นแบบเป็น UX/UI หลัก คงหนึ่งแพ็กเกจต่อบิล รองรับผู้ใหญ่และเด็ก และไม่ใช้ prototype storage เป็นฐานข้อมูลจริง
 
 ## 17. สิ่งที่ Codex ต้องระวัง
 
@@ -526,22 +413,64 @@ WebSocket/SSE เป็น implementation choice ตามความเหม�
 
 ระบบ Admin/หน้าร้านพื้นฐาน, billing, package, VAT, QR, floor plan, menu catalog และ checkout มี implementation จริงและผ่าน verification ตาม `docs/VERIFICATION.md`
 
-**จุดเริ่มงานถัดไปคือ Customer Quick Order ไม่ใช่การทำ Admin ใหม่**
-
-Customer Quick Order ต้อง:
-
-- ใช้ bill ที่มี package เดียว
-- กรอง menu ตาม package ของ bill
-- ตรวจ bill status และเวลาที่ Backend
-- ตรวจ category/menu/package active/eligibility ที่ Backend ทุกครั้ง
-- ส่งออเดอร์เป็นหลายรอบได้
-- มี idempotency
-- รองรับหลายอุปกรณ์โดยไม่สร้างข้อมูลซ้ำหรือข้าม validation
-
-หลัง Customer Quick Order มี data model และ submit flow จริงแล้ว จึงต่อ KDS และ real-time
-
-ณ สถานะเอกสารนี้:
-
-**Customer Quick Order และ KDS ยังไม่เสร็จ และต้องไม่ถูกอธิบายว่าเสร็จแล้ว**
+Customer Quick Order และ KDS มีข้อมูลจริงแล้ว งานต่อไปให้อิง implementation ปัจจุบันและ docs/QUICK_ORDER_KDS.md พร้อมข้อจำกัดการตรวจบนอุปกรณ์จริง ไม่ต้องเริ่ม Admin หรือ order model ใหม่
 
 หน้ารับลูกค้าปรับปุ่มรับลูกค้า / เปิดบิล และปุ่มยืนยันเป็นขนาดใหญ่ (สูงอย่างน้อย 64px, ตัวอักษร 20px) พร้อมช่องกรอกและปุ่มอื่นที่แตะได้สะดวกสำหรับแท็บเล็ต ยังต้องตรวจบน iPad จริง
+
+อัปเดต 19 ตุลาคม 2026: หน้าออกแบบผังยืนยัน/ยกเลิกพื้นที่ที่ลากผ่านกล่องบนผัง โต๊ะใหม่กรอกชื่อและที่นั่งในกล่องนั้นได้ ฟอร์มรับลูกค้าเอาช่องระยะเวลาออกและใช้ค่าตั้งร้าน ปุ่มยกเลิกกับเปิดบิลอยู่แถวเดียวกัน การเปลี่ยนพื้นที่ยังต้องบันทึกผังตามเดิม
+
+ฟอร์มรับลูกค้าเมื่อเปิดจากผังแสดงชื่อโต๊ะและจำนวนที่นั่งเป็นข้อความ ไม่มี dropdown เลือกโต๊ะ และยึดโต๊ะที่เลือกจากผังในการเปิดบิล
+
+อัปเดตฟอร์มเปิดบิล 19 ตุลาคม 2026: แพ็กเกจเปลี่ยนเป็นการ์ดปุ่มใหญ่แบบ radio แสดงชื่อและราคาผู้ใหญ่/เด็ก เลือกได้หนึ่งแพ็กเกจ ช่องจำนวนมีตัวเลข 32px พร้อมปุ่ม −/+ สูง 76px และพิมพ์เองได้ ขยาย modal สูงสุด 900px เพื่อใช้บนแท็บเล็ต ตรวจ DOM/ยอด/ค่าที่ส่งแล้ว ยังไม่ได้ตรวจ iPad จริง
+
+- Header ของหน้าหลังบ้านใช้ชื่อร้านจากการตั้งค่า ทั้งชื่อด้านบนเมนูและชื่อแท็บเบราว์เซอร์ เปลี่ยนตามทันทีหลังบันทึกการตั้งค่า รองรับชื่อยาวโดยตัดบรรทัด
+
+หน้ารับลูกค้าแสดงเวลาคงเหลือ HH:MM:SS บนโต๊ะที่มีบิลเปิดอยู่และในป็อปอัพ อัปเดตทุกวินาที เมื่อหมดเวลาแสดงข้อความหมดเวลา โดยโต๊ะยังไม่ว่างจนเช็คบิล
+
+ข้อความชื่อโต๊ะ จำนวนที่นั่ง และเวลาคงเหลือจัดกึ่งกลางพื้นที่โต๊ะทั้งก้อน ไม่ยึดช่องแรกของโต๊ะแล้ว
+
+โต๊ะที่ปิดปรับปรุงแสดงหมายเหตุที่พนักงานกรอกตอนปิดโต๊ะไว้กลางโต๊ะใต้จำนวนที่นั่ง และดูข้อความเต็มได้จากป็อปอัพโต๊ะ
+
+## เมนูตัวอย่างครบหมวด — 19 ตุลาคม 2026
+
+เพิ่มผ่าน admin API จริง 83 รายการ รวมกับริบอายเดิมเป็น 84 รายการครบ 8 หมวด: เนื้อ 10 หมู 10 ทะเล 12 ลูกชิ้น 10 ผัก 14 เส้น 8 ของหวาน 10 เครื่องดื่ม 10 พร้อมคำอธิบายและ Emoji ใช้ไอคอนอาหาร ยังไม่ได้เพิ่มภาพถ่าย
+
+แพ็กเกจหลังเพิ่มมีรายการเชื่อม Standard 59 / Deluxe 75 / Premium 84 เก็บสิทธิ์และข้อมูลริบอายเดิมไว้ ตรวจทุกเมนูใหม่ว่าหมวดหมู่ สถานะ และ packageIds ตรงกับแผนทั้งหมด และ preview หลังเพิ่มรายงาน toCreate=0
+
+ไฟล์รายการ `data/demo-menu-catalog.json` และสคริปต์ `scripts/seed-demo-menus.cjs` ใช้ preview เป็นค่าเริ่มต้น รัน --apply เพื่อเพิ่มเฉพาะรายการที่ยังไม่มี ไม่แก้หมวดหมู่ แพ็กเกจ หรือเมนูเดิม ไม่ต้อง rebuild แอปเพื่อเห็นข้อมูล
+
+## รายงานยอดขาย — 19 ตุลาคม 2026
+
+เพิ่ม `/admin/reports` และ API `/api/admin/reports/sales?from=YYYY-MM-DD&to=YYYY-MM-DD` สำหรับผู้ดูแลร้าน เลือกวันนี้ 7 วันล่าสุด เดือนนี้ หรือช่วงวันที่เอง สูงสุด 366 วันต่อครั้ง
+
+นับเฉพาะบิล PAID ตาม paid_at ในเขตเวลา Asia/Bangkok แสดงยอดรับชำระ จำนวนบิล ผู้ใหญ่/เด็ก ยอดเฉลี่ยต่อบิล ค่าบริการก่อน VAT, VAT, ค่าบริการรวม VAT และค่าปรับที่เรียกเก็บ พร้อมสรุปรายวัน ช่องทาง CASH/TRANSFER/CARD และแพ็กเกจ ใช้ยอดและชื่อแพ็กเกจที่เก็บในบิล ไม่คำนวณย้อนด้วยราคาปัจจุบัน อ่านจากบิลทั้งหมดในช่วงวันที่ เช่นเดียวกับหน้าประวัติบิลที่มี pagination แล้ว
+
+ReportService อ่านข้อมูลด้วย transaction แบบ read-only/repeatable-read และรวม bill_lines ให้เหลือหนึ่งแถวต่อบิลก่อนรวมเงิน ป้องกันยอดซ้ำเมื่อบิลมีทั้งผู้ใหญ่และเด็ก ไม่มี migration หรือการเปลี่ยนข้อมูลบิล
+
+ตรวจด้วย ReportServiceTest (ช่วงวันไทยและขอบเขตช่วงวันที่) และ `node scripts/report-smoke.cjs` (SQL จริงกับตารางชั่วคราวที่ rollback, API ที่ต้อง login, ผลรวมทุกกลุ่ม และวันที่ไม่ถูกต้อง) ผ่าน ยังไม่มีรายงานยอดสั่งอาหารรายเมนู ต้นทุน/กำไร การคืนเงิน หรือส่งออก Excel/PDF เพราะระบบสั่งอาหารและข้อมูลต้นทุนยังไม่พัฒนา
+
+รายงานยอดขายเพิ่มปุ่มพิมพ์ผ่าน window.print() พร้อมหัวกระดาษชื่อร้าน วันที่รายงานและเวลาพิมพ์ CSS พิมพ์ A4 แนวตั้ง ซ่อนเมนู ตัวกรอง ปุ่ม และหน้าต่างแก้ไข และให้หัวตารางแสดงซ้ำเมื่อข้ามหน้า รองรับ Ctrl+P โดยอัปเดตเวลาผ่าน beforeprint การบันทึก PDF ใช้ตัวเลือกในเบราว์เซอร์ ยังไม่ใช่ระบบสร้างไฟล์ PDF ที่เซิร์ฟเวอร์
+
+## บัญชีพนักงาน ประวัติบิล และ Audit — 19 ตุลาคม 2026
+
+พัฒนาแล้วตามคำขอ 3 ส่วน ใช้ migration 005 ที่รันแบบ manual บน localhost แล้ว พร้อม private pg_dump ก่อน migration ใน .runtime/backups ไม่เปลี่ยนบิลหรือเมนูเดิม
+
+Staff ใช้ฐานข้อมูลและ hash แบบ BCrypt ผ่าน PasswordEncoder รักษา admin เดิมจาก .env เฉพาะ bootstrap ครั้งแรก ไม่ seed ทับเมื่อ restart การเปลี่ยน role/active/password เพิ่ม auth_version และ StaffSessionFilter ตรวจทุกคำขอหลังบ้าน ป้องกันเปลี่ยนสิทธิ์หรือปิดตัวเอง และคงแอดมินอย่างน้อยหนึ่งคน การ reset password ตนเองพาไปหน้า login
+
+สิทธิ์ ADMIN ทุกส่วน, CASHIER งานรับลูกค้า/ย้าย/ชำระบิล/เปิดปิดโต๊ะ/ประวัติบิล, KITCHEN เปิด–ปิดอาหารใน /admin/kitchen จำกัดทั้ง route และ API state ฝั่งครัวไม่มีบิล สถิติยอดขาย หรือราคาของแพ็กเกจ รอบนี้เป็นขั้นก่อน KDS; ปัจจุบันต่อ KDS แล้วตาม docs/QUICK_ORDER_KDS.md
+
+HistoryService ให้ GET /api/admin/bills รองรับ from/to/dateType/status/q/page/size ค้นข้อมูลทั้งหมดและแบ่งหน้า ไม่อิง bills ล่าสุด 200 ใน state ซึ่งยังใช้เฉพาะ dashboard ตัวกรองวันรับชำระไม่รวมบิลที่ยังไม่ชำระ
+
+AuditService บันทึก actor เวลา action entity และ before/after JSON ใน transaction เดียวกับการแก้ไข ครอบคลุม SETTINGS/PACKAGE/MENU/CATEGORY/STAFF และ OPEN/CHECKOUT/MOVE/AVAILABILITY ของบิล/โต๊ะ เก็บเฉพาะข้อมูลสาธารณะของบัญชีและ flag เปลี่ยนรหัสผ่าน ไม่มี hash/password/ภาพดิบ/QR token ใน audit ใช้ GET /api/admin/audit และหน้า /admin/audit เฉพาะแอดมิน ประวัติไม่ย้อนหลังไปก่อนเปิดฟังก์ชัน
+
+ตรวจ Docker unit tests 13 รายการ และ staff-history-smoke ผ่านทั้งสิทธิ์หน้า/API การสร้างบัญชี รหัสผ่านใหม่ การปิด/เปลี่ยน role และเซสชันเดิม ประวัติราคาก่อนหลัง ไม่มีข้อมูลบัญชี QA หรือเมนู QA ค้าง ตรวจ report-smoke ผ่านหลังเปลี่ยนระบบ login และทดสอบ SQL จริงกับ temporary bills 205 แถวว่า OFFSET 200 เข้าถึงบิลเก่าสุดได้
+
+## พิมพ์ใบสั่งอาหาร KDS — 19 ตุลาคม 2026
+
+งาน KDS เพิ่มปุ่มพิมพ์ใบสั่งอาหารบนการ์ดและรายละเอียดแล้ว: `/admin/orders/{id}/print` ใช้ขนาดกระดาษตามค่าร้าน แสดง snapshot อาหาร/จำนวน โต๊ะปัจจุบัน รอบ/บิล/ออเดอร์ เวลา และตัวเลือกสำเนา เปิดหน้าพิมพ์แล้วกดพิมพ์ผ่าน browser ไม่เปลี่ยนสถานะอาหาร ไม่มี auto-print หรือการยืนยันว่าเครื่องพิมพ์พิมพ์สำเร็จ ตรวจ API/DOM แล้ว ยังไม่ได้ตรวจเครื่องพิมพ์จริง
+
+## ปฏิทินภาษาไทย — 19 ตุลาคม 2026
+
+ตัวกรองวันที่ในรายงาน บิลย้อนหลัง และประวัติการแก้ไข ใช้ Flatpickr 4.6.13 พร้อม Thai locale ที่เก็บใน `/assets/vendor/flatpickr/` และ MIT license แสดงชื่อเดือน/วันไทย ปี ค.ศ. ส่ง ISO YYYY-MM-DD ตามเดิม โดย `/js/calendar.js` ผูกปฏิทินกับช่อง date ที่ render ใหม่และล้าง instance เก่า ปิด native picker บนมือถือเพื่อคงชื่อเดือนไทย มีปุ่มวันนี้และล้างวันที่สำหรับตัวกรองที่ไม่บังคับ ไม่มีการเปลี่ยนข้อมูลฐานข้อมูล
+
+ตรวจ `scripts/calendar-smoke.cjs` ผ่านด้วย jsdom (ติดตั้ง dependency ทดสอบตาม comment ในสคริปต์) รวม FormData, leap day, ข้ามปี, ขอบเขตวันและ required ทดสอบ scripts/assets/API ที่ให้บริการจริงทั้ง 3 หน้าใน jsdom ผ่าน Docker Healthy และ unit tests 13 รายการผ่าน ยังไม่ได้ตรวจบน iPad จริง

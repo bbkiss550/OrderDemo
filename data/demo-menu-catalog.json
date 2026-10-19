@@ -1,0 +1,106 @@
+{
+  "description": "เมนูตัวอย่างสำหรับร้านชาบูและปิ้งย่าง ใช้หมวดหมู่เดิม ไม่เขียนทับรายการที่มีอยู่ tier คือแพ็กเกจขั้นต่ำที่เปิดให้สั่ง",
+  "packageTiers": ["Standard", "Deluxe", "Premium"],
+  "groups": [
+    {"category": "เนื้อ", "emoji": "🥩", "items": [
+      {"name": "เนื้อสันคอสไลซ์", "description": "เนื้อสันคอหั่นบาง สำหรับชาบูหรือปิ้งย่าง", "tier": "Standard"},
+      {"name": "เนื้อเสือร้องไห้สไลซ์", "description": "เนื้อส่วนอกติดมัน หั่นบางพร้อมปรุง", "tier": "Standard"},
+      {"name": "เนื้อติดมันสไลซ์", "description": "เนื้อสไลซ์สลับชั้นมัน สำหรับจุ่มน้ำซุป", "tier": "Standard"},
+      {"name": "เนื้อใบพายสไลซ์", "description": "เนื้อใบพายหั่นบาง เสิร์ฟเป็นจาน", "tier": "Deluxe"},
+      {"name": "เนื้อสันนอกสไลซ์", "description": "เนื้อสันนอกหั่นบาง สำหรับชาบูและปิ้งย่าง", "tier": "Deluxe"},
+      {"name": "เนื้อหนอกสไลซ์", "description": "เนื้อหนอกหั่นบางพร้อมปรุง", "tier": "Deluxe"},
+      {"name": "ริบอาย", "description": "เนื้อริบอายหั่นบาง มีมันแทรก", "tier": "Deluxe"},
+      {"name": "เนื้อสันใน", "description": "เนื้อสันในหั่นชิ้นพอดีคำ", "tier": "Premium"},
+      {"name": "เนื้อวากิวสไลซ์", "description": "เนื้อวากิวสไลซ์สำหรับเมนูพิเศษ", "tier": "Premium"},
+      {"name": "ลิ้นวัวสไลซ์", "description": "ลิ้นวัวหั่นบาง สำหรับปิ้งย่าง", "tier": "Premium"}
+    ]},
+    {"category": "หมู", "emoji": "🥓", "items": [
+      {"name": "หมูสันคอสไลซ์", "description": "หมูสันคอหั่นบาง มีมันแทรก", "tier": "Standard"},
+      {"name": "หมูสามชั้นสไลซ์", "description": "หมูสามชั้นหั่นบาง สำหรับชาบูและปิ้งย่าง", "tier": "Standard"},
+      {"name": "หมูสันนอกสไลซ์", "description": "หมูสันนอกหั่นบางพร้อมปรุง", "tier": "Standard"},
+      {"name": "หมูสันในสไลซ์", "description": "หมูสันในหั่นชิ้นบาง", "tier": "Standard"},
+      {"name": "หมูหมักงา", "description": "หมูหมักซอสและงาขาว เสิร์ฟพร้อมปรุง", "tier": "Standard"},
+      {"name": "หมูหมักพริกไทยดำ", "description": "หมูหมักซอสพริกไทยดำ", "tier": "Standard"},
+      {"name": "หมูเด้ง", "description": "หมูบดปรุงรส สำหรับตักลงหม้อชาบู", "tier": "Standard"},
+      {"name": "เบคอน", "description": "เบคอนหั่นชิ้น สำหรับปิ้งย่าง", "tier": "Deluxe"},
+      {"name": "คอหมูหมัก", "description": "คอหมูหมักซอส หั่นชิ้นพอดีคำ", "tier": "Deluxe"},
+      {"name": "หมูคุโรบูตะสไลซ์", "description": "หมูคุโรบูตะหั่นบาง สำหรับเมนูพิเศษ", "tier": "Premium"}
+    ]},
+    {"category": "ทะเล", "emoji": "🦐", "items": [
+      {"name": "กุ้งขาว", "description": "กุ้งขาวทั้งตัว สำหรับชาบูหรือปิ้งย่าง", "tier": "Standard"},
+      {"name": "ปลาหมึกกล้วย", "description": "ปลาหมึกกล้วยหั่นชิ้นพร้อมปรุง", "tier": "Standard"},
+      {"name": "ปลาเนื้อขาวสไลซ์", "description": "ปลาเนื้อขาวหั่นชิ้น สำหรับจุ่มน้ำซุป", "tier": "Standard"},
+      {"name": "หอยแมลงภู่", "description": "หอยแมลงภู่พร้อมเปลือก สำหรับปรุงในหม้อหรือย่าง", "tier": "Standard"},
+      {"name": "กุ้งแก้ว", "description": "เนื้อกุ้งแกะเปลือก เสิร์ฟพร้อมปรุง", "tier": "Deluxe"},
+      {"name": "หมึกกรอบ", "description": "หมึกกรอบหั่นชิ้น สำหรับชาบู", "tier": "Deluxe"},
+      {"name": "หนวดปลาหมึก", "description": "หนวดปลาหมึกหั่นชิ้น สำหรับชาบูและปิ้งย่าง", "tier": "Deluxe"},
+      {"name": "หอยตลับ", "description": "หอยตลับพร้อมเปลือก สำหรับหม้อชาบู", "tier": "Deluxe"},
+      {"name": "กุ้งแม่น้ำ", "description": "กุ้งแม่น้ำทั้งตัว สำหรับปิ้งย่าง", "tier": "Premium"},
+      {"name": "หอยเชลล์", "description": "เนื้อหอยเชลล์ เสิร์ฟพร้อมปรุง", "tier": "Premium"},
+      {"name": "ปลาแซลมอน", "description": "ปลาแซลมอนหั่นชิ้น สำหรับปรุงในหม้อหรือย่าง", "tier": "Premium"},
+      {"name": "หอยนางรม", "description": "เนื้อหอยนางรม สำหรับปรุงสุกในหม้อชาบู", "tier": "Premium"}
+    ]},
+    {"category": "ลูกชิ้น", "emoji": "🍡", "items": [
+      {"name": "ลูกชิ้นปลา", "description": "ลูกชิ้นปลาเนื้อเด้ง เสิร์ฟเป็นจาน", "tier": "Standard"},
+      {"name": "ลูกชิ้นหมู", "description": "ลูกชิ้นหมู สำหรับหม้อชาบู", "tier": "Standard"},
+      {"name": "ลูกชิ้นเนื้อ", "description": "ลูกชิ้นเนื้อวัว สำหรับจุ่มน้ำซุป", "tier": "Standard"},
+      {"name": "ลูกชิ้นกุ้ง", "description": "ลูกชิ้นรสกุ้ง เนื้อเด้ง", "tier": "Standard"},
+      {"name": "ลูกชิ้นรักบี้", "description": "ลูกชิ้นปลาทรงรักบี้", "tier": "Standard"},
+      {"name": "ปูอัด", "description": "ปูอัดหั่นชิ้น สำหรับชาบู", "tier": "Standard"},
+      {"name": "เต้าหู้ปลา", "description": "เต้าหู้ปลาเนื้อนุ่มหั่นชิ้น", "tier": "Standard"},
+      {"name": "ไส้กรอกค็อกเทล", "description": "ไส้กรอกขนาดพอดีคำ", "tier": "Standard"},
+      {"name": "ลูกชิ้นชีส", "description": "ลูกชิ้นสอดไส้ชีส", "tier": "Deluxe"},
+      {"name": "เกี๊ยวกุ้ง", "description": "เกี๊ยวไส้กุ้ง สำหรับต้มในน้ำซุป", "tier": "Deluxe"}
+    ]},
+    {"category": "ผัก", "emoji": "🥬", "items": [
+      {"name": "ผักกาดขาว", "description": "ผักกาดขาวหั่นชิ้นพร้อมลงหม้อ", "tier": "Standard"},
+      {"name": "ผักบุ้ง", "description": "ผักบุ้งหั่นท่อน", "tier": "Standard"},
+      {"name": "กวางตุ้งฮ่องเต้", "description": "กวางตุ้งฮ่องเต้ สำหรับชาบู", "tier": "Standard"},
+      {"name": "กะหล่ำปลี", "description": "กะหล่ำปลีหั่นชิ้น", "tier": "Standard"},
+      {"name": "ข้าวโพดหวาน", "description": "ข้าวโพดหวานหั่นแว่น", "tier": "Standard"},
+      {"name": "แครอท", "description": "แครอทหั่นแว่น สำหรับเพิ่มในน้ำซุป", "tier": "Standard"},
+      {"name": "ฟักทอง", "description": "ฟักทองหั่นชิ้นบาง", "tier": "Standard"},
+      {"name": "เห็ดเข็มทอง", "description": "เห็ดเข็มทองแบ่งเป็นช่อ", "tier": "Standard"},
+      {"name": "เห็ดออรินจิ", "description": "เห็ดออรินจิหั่นชิ้น สำหรับชาบูและปิ้งย่าง", "tier": "Standard"},
+      {"name": "เห็ดชิเมจิ", "description": "เห็ดชิเมจิแบ่งเป็นช่อ", "tier": "Standard"},
+      {"name": "เห็ดหอม", "description": "เห็ดหอม สำหรับเพิ่มรสชาติให้น้ำซุป", "tier": "Standard"},
+      {"name": "สาหร่ายวากาเมะ", "description": "สาหร่ายวากาเมะ สำหรับชาบู", "tier": "Standard"},
+      {"name": "ต้นหอมญี่ปุ่น", "description": "ต้นหอมญี่ปุ่นหั่นท่อน", "tier": "Standard"},
+      {"name": "ผักรวม", "description": "ชุดผักรวมสำหรับหม้อชาบู", "tier": "Standard"}
+    ]},
+    {"category": "เส้น", "emoji": "🍜", "items": [
+      {"name": "วุ้นเส้น", "description": "วุ้นเส้นแบ่งชุด สำหรับต้มในน้ำซุป", "tier": "Standard"},
+      {"name": "บะหมี่ไข่", "description": "บะหมี่ไข่เส้นเหลือง", "tier": "Standard"},
+      {"name": "เส้นอุด้ง", "description": "เส้นอุด้งญี่ปุ่นเส้นหนา", "tier": "Standard"},
+      {"name": "เส้นราเมง", "description": "เส้นราเมง สำหรับหม้อชาบู", "tier": "Standard"},
+      {"name": "เส้นแก้ว", "description": "เส้นแก้วเนื้อกรุบ สำหรับจุ่มน้ำซุป", "tier": "Standard"},
+      {"name": "เส้นบุก", "description": "เส้นบุกแบ่งชุด พร้อมลงหม้อ", "tier": "Standard"},
+      {"name": "เส้นหมี่ขาว", "description": "เส้นหมี่ขาว สำหรับต้มในน้ำซุป", "tier": "Standard"},
+      {"name": "เส้นโซบะ", "description": "เส้นโซบะ สำหรับหม้อชาบู", "tier": "Deluxe"}
+    ]},
+    {"category": "ของหวาน", "emoji": "🍨", "items": [
+      {"name": "ไอศกรีมวานิลลา", "description": "ไอศกรีมรสวานิลลา เสิร์ฟหนึ่งถ้วย", "tier": "Standard"},
+      {"name": "ไอศกรีมช็อกโกแลต", "description": "ไอศกรีมรสช็อกโกแลต เสิร์ฟหนึ่งถ้วย", "tier": "Standard"},
+      {"name": "ไอศกรีมสตรอว์เบอร์รี", "description": "ไอศกรีมรสสตรอว์เบอร์รี เสิร์ฟหนึ่งถ้วย", "tier": "Standard"},
+      {"name": "วุ้นมะพร้าว", "description": "วุ้นมะพร้าวหั่นชิ้น เสิร์ฟเย็น", "tier": "Standard"},
+      {"name": "เฉาก๊วย", "description": "เฉาก๊วยในน้ำเชื่อม เสิร์ฟเย็น", "tier": "Standard"},
+      {"name": "แตงโม", "description": "แตงโมหั่นชิ้น เสิร์ฟเป็นจาน", "tier": "Standard"},
+      {"name": "สับปะรด", "description": "สับปะรดหั่นชิ้น เสิร์ฟเป็นจาน", "tier": "Standard"},
+      {"name": "พุดดิ้งนม", "description": "พุดดิ้งนมเนื้อนุ่ม เสิร์ฟเย็น", "tier": "Deluxe"},
+      {"name": "โมจิไอศกรีม", "description": "โมจิสอดไส้ไอศกรีม เสิร์ฟสองชิ้น", "tier": "Deluxe"},
+      {"name": "ชีสเค้ก", "description": "ชีสเค้กชิ้นเล็ก เสิร์ฟเย็น", "tier": "Premium"}
+    ]},
+    {"category": "เครื่องดื่ม", "emoji": "🥤", "items": [
+      {"name": "น้ำเปล่า", "description": "น้ำดื่มหนึ่งแก้ว", "tier": "Standard"},
+      {"name": "น้ำแข็ง", "description": "น้ำแข็งหนึ่งแก้ว", "tier": "Standard"},
+      {"name": "ชามะนาว", "description": "ชามะนาวเย็นหนึ่งแก้ว", "tier": "Standard"},
+      {"name": "ชาเขียว", "description": "ชาเขียวเย็นหนึ่งแก้ว", "tier": "Standard"},
+      {"name": "น้ำเก๊กฮวย", "description": "น้ำเก๊กฮวยเย็นหนึ่งแก้ว", "tier": "Standard"},
+      {"name": "น้ำกระเจี๊ยบ", "description": "น้ำกระเจี๊ยบเย็นหนึ่งแก้ว", "tier": "Standard"},
+      {"name": "น้ำอัดลมโคล่า", "description": "น้ำอัดลมรสโคล่าหนึ่งแก้ว", "tier": "Standard"},
+      {"name": "น้ำอัดลมเลมอนไลม์", "description": "น้ำอัดลมรสเลมอนไลม์หนึ่งแก้ว", "tier": "Standard"},
+      {"name": "น้ำส้ม", "description": "เครื่องดื่มน้ำส้มเย็นหนึ่งแก้ว", "tier": "Deluxe"},
+      {"name": "ชาพีช", "description": "ชาพีชเย็นหนึ่งแก้ว", "tier": "Deluxe"}
+    ]}
+  ]
+}

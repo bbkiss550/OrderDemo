@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="th" xmlns:th="http://www.thymeleaf.org">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title th:text="'ใบสั่งอาหาร #'+${order.id}">ใบสั่งอาหาร</title>
+<style th:inline="css">
+@page{size:auto;margin:0}
+*{box-sizing:border-box}body{margin:0;background:#f3f3f6;color:#000;font-family:Tahoma,"Segoe UI",sans-serif}.print-controls{padding:20px;text-align:center;font-size:14px}.print-controls button{border:0;border-radius:8px;background:#6965ff;color:#fff;font:inherit;font-weight:bold;padding:14px 22px;min-height:48px;cursor:pointer}.print-controls label{display:block;margin:14px 0}.print-controls input{width:20px;height:20px;vertical-align:middle}.print-controls p{line-height:1.6}.order-ticket{width:[[${shop.paper_width}]]mm;padding:[[${shop.paper_margin}]]mm;margin:0 auto 24px;background:#fff;font-size:12px;overflow-wrap:anywhere}.ticket-center{text-align:center}.order-ticket h1{font-size:17px;margin:6px 0}.order-ticket h2{font-size:22px;margin:10px 0}.order-ticket p{margin:6px 0}.ticket-divider{border-top:1px dashed #000;margin:12px 0}.ticket-meta{display:flex;justify-content:space-between;gap:8px;margin:7px 0}.ticket-meta>strong{text-align:right}.order-ticket table{width:100%;border-collapse:collapse;table-layout:fixed}.order-ticket th{text-align:left;font-size:12px;border-bottom:1px dashed #000;padding:8px 0}.order-ticket th:last-child,.order-ticket td:last-child{text-align:right;width:42px}.order-ticket td{vertical-align:top;padding:10px 0;border-bottom:1px dashed #bbb;font-size:15px;font-weight:bold;overflow-wrap:anywhere}.order-ticket td small{display:block;font-size:10px;font-weight:normal;margin-top:4px}.ticket-total{font-size:17px;font-weight:bold}.ticket-copy,.ticket-closed{border:2px solid #000;padding:7px;font-size:16px;font-weight:bold}.ticket-foot{font-size:10px;line-height:1.6;text-align:center}[hidden]{display:none!important}@media print{body{background:#fff}.print-controls{display:none}.order-ticket{margin:0}thead{display:table-header-group}tr{break-inside:avoid}}
+</style>
+</head><body>
+<div class="print-controls">
+ <button type="button" id="printOrderTicket">พิมพ์ใบสั่งอาหาร</button>
+ <label><input type="checkbox" id="ticketCopy"> พิมพ์ซ้ำเป็นสำเนา</label>
+ <p th:text="'ใช้กระดาษตามค่าร้าน '+${shop.paper_width}+' มม. เลือกขนาดเดียวกันในเครื่องพิมพ์'">เลือกขนาดกระดาษให้ตรงกับค่าร้าน</p>
+ <p>ปิดหัวกระดาษ/ท้ายกระดาษของเบราว์เซอร์ก่อนพิมพ์</p>
+</div>
+<article class="order-ticket">
+ <header class="ticket-center"><h1 th:text="${shop.name}"></h1><h1>ใบสั่งอาหาร</h1><p class="ticket-copy" id="ticketCopyLabel" hidden>สำเนา · ห้ามทำอาหารซ้ำ</p><h2 th:text="'โต๊ะ '+${order.table_name}"></h2><p th:if="${order.table_name_at_order != order.table_name}" th:text="'ย้ายจากโต๊ะ '+${order.table_name_at_order}"></p></header>
+ <div class="ticket-divider"></div>
+ <div class="ticket-meta"><span>ออเดอร์</span><strong th:text="'#'+${order.id}"></strong></div>
+ <div class="ticket-meta"><span>บิล / รอบที่</span><strong th:text="'#'+${order.bill_id}+' / '+${order.round_no}"></strong></div>
+ <div class="ticket-meta"><span>เวลาสั่ง</span><strong th:text="${orderedAt}"></strong></div>
+ <div class="ticket-meta"><span>แพ็กเกจ</span><strong th:text="${order.package_name}"></strong></div>
+ <div class="ticket-meta"><span>สถานะ</span><strong th:text="${statuses[order.status]}"></strong></div>
+ <p class="ticket-center ticket-closed" th:if="${order.bill_status == 'PAID'}">บิลชำระเงินแล้ว<br>ตรวจสอบก่อนทำอาหาร/เสิร์ฟ</p>
+ <table><thead><tr><th>รายการอาหาร</th><th>จำนวน</th></tr></thead><tbody><tr th:each="item:${order.items}"><td><span th:text="${item.menu_name}"></span><small th:text="${item.category_name}"></small></td><td th:text="${item.quantity}"></td></tr></tbody></table>
+ <div class="ticket-meta ticket-total"><span>รวม</span><strong th:text="${order.quantity}+' จาน'"></strong></div>
+ <div class="ticket-divider"></div>
+ <p class="ticket-foot">เวลาไทย (Asia/Bangkok)<br>พิมพ์เมื่อ <span id="ticketPrintedAt" th:text="${printedAt}"></span></p>
+</article>
+<script src="/js/order-ticket.js"></script>
+</body></html>

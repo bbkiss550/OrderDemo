@@ -1,19 +1,25 @@
 <aside xmlns:th="http://www.thymeleaf.org" th:fragment="sidebar" class="sidebar app-sidebar" id="sidebar">
- <a class="brand" href="/admin/reception"><span class="brand-icon">♨</span> FoodFlow</a>
+ <a class="brand" th:href="${user.role == 'KITCHEN' ? '/admin/kds' : '/admin/reception'}"><span class="brand-icon">♨</span><span id="shopName" th:text="${shop.name}">FoodFlow</span></a>
  <button class="icon-btn sidebar-close" id="sidebarClose" type="button" aria-label="ปิดเมนู"><i class="bx bx-x"></i></button>
  <div class="nav-heading">ภาพรวมร้าน</div>
- <a href="/admin/reception" data-nav="/admin/reception"><i class="bx bx-chair"></i> รับลูกค้าและเช็คบิล</a>
- <a href="/admin" data-nav="/admin"><i class="bx bx-grid-alt"></i> แดชบอร์ด</a>
- <a href="/admin/bills" data-nav="/admin/bills"><i class="bx bx-receipt"></i> บิลและการชำระเงิน</a>
- <div class="nav-heading">จัดการร้าน</div>
- <a href="/admin/menu" data-nav="/admin/menu"><i class="bx bx-list-ul"></i> จัดการเมนูอาหาร</a>
- <a href="/admin/categories" data-nav="/admin/categories"><i class="bx bx-category"></i> หมวดหมู่อาหาร</a>
- <a href="/admin/floor-plan" data-nav="/admin/floor-plan"><i class="bx bx-layer"></i> จัดการผังโต๊ะ</a>
- <a href="/admin/packages" data-nav="/admin/packages"><i class="bx bx-purchase-tag-alt"></i> แพ็กเกจบุฟเฟต์</a>
- <div class="nav-heading">ระบบ</div>
- <a href="/admin/settings" data-nav="/admin/settings"><i class="bx bx-cog"></i> ตั้งค่าร้าน</a>
+ <a th:if="${user.role != 'KITCHEN'}" href="/admin/reception" data-nav="/admin/reception"><i class="bx bx-chair"></i> รับลูกค้าและเช็คบิล</a>
+ <a th:if="${user.role == 'ADMIN'}" href="/admin" data-nav="/admin"><i class="bx bx-grid-alt"></i> แดชบอร์ด</a>
+ <a th:if="${user.role != 'KITCHEN'}" href="/admin/bills" data-nav="/admin/bills"><i class="bx bx-receipt"></i> บิลและการชำระเงิน</a>
+ <a th:if="${user.role != 'KITCHEN'}" href="/admin/orders" data-nav="/admin/orders"><i class="bx bx-food-menu"></i> ออเดอร์อาหาร</a>
+ <a th:if="${user.role != 'CASHIER'}" href="/admin/kds" data-nav="/admin/kds"><i class="bx bx-restaurant"></i> คิวอาหารครัว</a>
+ <a th:if="${user.role == 'ADMIN'}" href="/admin/reports" data-nav="/admin/reports"><i class="bx bx-bar-chart-alt-2"></i> รายงานยอดขาย</a>
+ <a th:if="${user.role != 'CASHIER'}" href="/admin/kitchen" data-nav="/admin/kitchen"><i class="bx bx-restaurant"></i> อาหารพร้อมให้บริการ</a>
+ <div th:if="${user.role == 'ADMIN'}" class="nav-heading">จัดการร้าน</div>
+ <a th:if="${user.role == 'ADMIN'}" href="/admin/menu" data-nav="/admin/menu"><i class="bx bx-list-ul"></i> จัดการเมนูอาหาร</a>
+ <a th:if="${user.role == 'ADMIN'}" href="/admin/categories" data-nav="/admin/categories"><i class="bx bx-category"></i> หมวดหมู่อาหาร</a>
+ <a th:if="${user.role == 'ADMIN'}" href="/admin/floor-plan" data-nav="/admin/floor-plan"><i class="bx bx-layer"></i> จัดการผังโต๊ะ</a>
+ <a th:if="${user.role == 'ADMIN'}" href="/admin/packages" data-nav="/admin/packages"><i class="bx bx-purchase-tag-alt"></i> แพ็กเกจบุฟเฟต์</a>
+ <div th:if="${user.role == 'ADMIN'}" class="nav-heading">ระบบ</div>
+ <a th:if="${user.role == 'ADMIN'}" href="/admin/staff" data-nav="/admin/staff"><i class="bx bx-user"></i> บัญชีพนักงาน</a>
+ <a th:if="${user.role == 'ADMIN'}" href="/admin/audit" data-nav="/admin/audit"><i class="bx bx-history"></i> ประวัติการแก้ไข</a>
+ <a th:if="${user.role == 'ADMIN'}" href="/admin/settings" data-nav="/admin/settings"><i class="bx bx-cog"></i> ตั้งค่าร้าน</a>
  <div class="sidebar-footer">
-  <div class="sidebar-note"><span class="status-dot"></span> ระบบจัดการหน้าร้าน<br><small>เปิดบิล · ออก QR · รับชำระเงิน</small></div>
+  <div class="sidebar-note"><span class="status-dot"></span><span th:text="${user.display_name}"></span><small th:text="${user.role == 'ADMIN' ? 'แอดมิน' : (user.role == 'CASHIER' ? 'แคชเชียร์' : 'ครัว')}"></small></div>
   <form class="sidebar-logout" th:action="@{/logout}" method="post"><button class="sidebar-logout-button" type="submit"><i class="bx bx-log-out"></i><span>ออกจากระบบ</span></button></form>
  </div>
 </aside>

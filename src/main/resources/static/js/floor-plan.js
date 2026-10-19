@@ -1,9 +1,40 @@
 'use strict';
+function tableTimeLeft(table,now=Date.now()){
+ const end=table.ends_at?new Date(table.ends_at).getTime():NaN;
+ if(table.expired||(Number.isFinite(end)&&end<=now))return {expired:true,text:'หมดเวลา'};
+ if(!Number.isFinite(end))return {expired:false,text:'—'};
+ const seconds=Math.ceil((end-now)/1000),hours=Math.floor(seconds/3600),minutes=Math.floor(seconds%3600/60);
+ return {expired:false,text:[hours,minutes,seconds%60].map(n=>String(n).padStart(2,'0')).join(':')};
+}
+function tableCountdown(table){const time=tableTimeLeft(table);return `<span class="floor-remaining ${time.expired?'is-expired':''}" data-table-remaining="${table.id}" aria-live="off" aria-label="${time.expired?'หมดเวลาสั่งอาหาร':'เวลาคงเหลือ '+time.text}" title="${time.expired?'หมดเวลาสั่งอาหาร':'เวลาคงเหลือ'}">${time.text}</span>`;}
+function tableLabelArea(cells){
+ const rows=cells.map(c=>c.row),columns=cells.map(c=>c.column),top=Math.min(...rows),bottom=Math.max(...rows),left=Math.min(...columns),right=Math.max(...columns);
+ if(cells.length===(bottom-top+1)*(right-left+1))return {top,left,bottom:bottom+1,right:right+1};
+ // Keep labels inside the largest filled rectangle of an irregular table.
+ const occupied=new Set(cells.map(c=>`${c.row},${c.column}`)),heights=Array(right-left+1).fill(0);let best={top:cells[0].row,left:cells[0].column,bottom:cells[0].row+1,right:cells[0].column+1},area=1;
+ for(let row=top;row<=bottom;row++){
+  for(let col=left;col<=right;col++)heights[col-left]=occupied.has(`${row},${col}`)?heights[col-left]+1:0;
+  const stack=[];
+  for(let col=0;col<=heights.length;col++){
+   const height=heights[col]||0;let start=col;
+   while(stack.length&&stack[stack.length-1].height>height){const block=stack.pop(),size=block.height*(col-block.start);if(size>area){area=size;best={top:row-block.height+1,left:left+block.start,bottom:row+1,right:left+col};}start=block.start;}
+   if(height&&(!stack.length||stack[stack.length-1].height<height))stack.push({start,height});
+  }
+ }
+ return best;
+}
 const floorPlan={id:null,layout:null,draft:[],design:page==='/admin/floor-plan',dirty:false,selected:null,cells:new Set(),replace:false,additive:false,ignoreClick:false,
  async load(){if(this.dirty)return;if(!state.floors.some(f=>f.id===this.id))this.id=state.floors[0]?.id??null;this.layout=this.id?await api(`/api/admin/floors/${this.id}/layout`):null;this.draft=this.layout?structuredClone(this.layout.tables):[];this.cells.clear();},
  tableKey(t){return String(t.id??t.key);},
+ tableLabel(table){const area=tableLabelArea(table.cells);return `<div class="floor-table-label" style="grid-area:${area.top+1} / ${area.left+1} / ${area.bottom+1} / ${area.right+1}"><strong>${escapeHtml(table.name)}</strong><small>${table.capacity} ที่นั่ง</small>${!table.active?`<span class="floor-closure-note">${escapeHtml(table.closure_reason||'ปิดปรับปรุงชั่วคราว')}</span>`:''}${!this.design&&table.bill_id?tableCountdown(table):table.expired&&table.bill_id?'<span class="expired-marker">◷ หมดเวลา</span>':''}</div>`;},
+ updateCountdowns(){
+  if(page!=='/admin/reception'||!this.layout||document.hidden)return;
+  const tables=new Map(this.layout.tables.filter(t=>t.bill_id).map(t=>[String(t.id),t])),now=Date.now();
+  document.querySelectorAll('[data-table-remaining]').forEach(el=>{const table=tables.get(el.dataset.tableRemaining);if(!table)return;const time=tableTimeLeft(table,now);if(el.textContent!==time.text){el.textContent=time.text;el.setAttribute('aria-label',time.expired?'หมดเวลาสั่งอาหาร':'เวลาคงเหลือ '+time.text);}el.classList.toggle('is-expired',time.expired);el.title=time.expired?'หมดเวลาสั่งอาหาร':'เวลาคงเหลือ';});
+ },
  mark(){this.dirty=true;this.render();},
  render(){
+  this.selectionObserver?.disconnect();
   this.cancelGesture?.();
   $('#pageActions').innerHTML=this.design?'<button class="btn btn-outline-primary" data-floor="add">+ เพิ่มชั้น</button>':button('↻ อัปเดต','refresh','','btn-outline-secondary');
   if(!this.layout){$('#content').innerHTML=empty(this.design?'เพิ่มชั้นเพื่อเริ่มออกแบบผังโต๊ะ':'ยังไม่มีผังโต๊ะ กรุณาให้ผู้ดูแลจัดการผังโต๊ะก่อนรับลูกค้า');return;}
@@ -12,13 +43,33 @@ const floorPlan={id:null,layout:null,draft:[],design:page==='/admin/floor-plan',
   const floorTabs=`<nav class="floor-tabs" aria-label="เลือกชั้น">${state.floors.map(x=>`<button class="btn ${x.id===this.id?'btn-primary':'btn-outline-secondary'}" data-floor="choose" data-id="${x.id}" aria-pressed="${x.id===this.id}">${escapeHtml(x.name)} <small>(${x.table_count} โต๊ะ)</small></button>`).join('')}</nav>`;
   const floorHeader=this.design?`<div class="card floor-header"><div><h3>${escapeHtml(f.name)}</h3><span class="muted">${f.grid_rows} แถว × ${f.grid_columns} คอลัมน์</span></div><div class="floor-tools">${this.replace?'<button class="btn btn-outline-secondary btn-sm" data-floor="cancel-area">ยกเลิกเลือกพื้นที่</button>':''}<button class="btn btn-outline-secondary btn-sm" data-floor="floor-options">จัดการชั้น</button><button class="btn btn-primary btn-sm" data-floor="save" ${!this.dirty?'disabled':''}>บันทึกผัง</button></div></div>`:'';
   const legend=`<div class="floor-legend"><span><i class="swatch free"></i> ว่าง</span><span><i class="swatch occupied"></i> ไม่ว่าง</span><span><i class="swatch closed"></i> ปิดรับ / ปรับปรุง</span><span>◷ หมดเวลาสั่งอาหาร</span>${this.dirty?'<strong class="text-primary">มีการแก้ไขที่ยังไม่บันทึก</strong>':''}</div>`;
-  const workspace=`<div class="floor-workspace"><div class="card floor-canvas"><div class="floor-scroll"><div id="floorBoard" class="floor-board ${this.design?'design':''}" style="--columns:${f.grid_columns};--rows:${f.grid_rows}" role="group" aria-label="ผังโต๊ะ ${escapeHtml(f.name)}">${Array.from({length:f.grid_rows*f.grid_columns},(_,i)=>{const row=Math.floor(i/f.grid_columns),column=i%f.grid_columns,key=`${row},${column}`,t=occupied.get(key),first=t&&t.cells[0].row===row&&t.cells[0].column===column,status=t?(!t.active?'closed':t.bill_id?'occupied':'free'):'blank',joined=t?['top','right','bottom','left'].filter((_,n)=>{const [dr,dc]=[[-1,0],[0,1],[1,0],[0,-1]][n];return occupied.get(`${row+dr},${column+dc}`)===t;}).map(edge=>'join-'+edge).join(' '):'';return `<button type="button" class="floor-cell ${status} ${joined} ${t&&this.tableKey(t)===this.selected?'table-selected':''} ${this.cells.has(key)?'cell-selected':''}" data-cell="${key}" ${t?`data-table="${this.tableKey(t)}"`:''} aria-label="${t?`${escapeHtml(t.name)} ${t.capacity} ที่นั่ง ${!t.active?'ปิดรับ':t.bill_id?t.expired?'ไม่ว่าง หมดเวลา':'ไม่ว่าง':'ว่าง'} · `:''}แถว ${row+1} คอลัมน์ ${column+1}" ${!this.design&&!t?'disabled':''} aria-pressed="${this.design?this.cells.has(key):Boolean(t&&this.tableKey(t)===this.selected)}">${first?`<strong>${escapeHtml(t.name)}</strong><small>${t.capacity} ที่นั่ง</small>${t.expired&&t.bill_id?'<span class="expired-marker">◷ หมดเวลา</span>':''}`:''}</button>`;}).join('')}</div></div></div></div>`;
+  const workspace=`<div class="floor-workspace"><div class="card floor-canvas"><div class="floor-scroll"><div id="floorBoard" class="floor-board ${this.design?'design':''}" style="--columns:${f.grid_columns};--rows:${f.grid_rows}" role="group" aria-label="ผังโต๊ะ ${escapeHtml(f.name)}">${Array.from({length:f.grid_rows*f.grid_columns},(_,i)=>{const row=Math.floor(i/f.grid_columns),column=i%f.grid_columns,key=`${row},${column}`,t=occupied.get(key),status=t?(!t.active?'closed':t.bill_id?'occupied':'free'):'blank',joined=t?['top','right','bottom','left'].filter((_,n)=>{const [dr,dc]=[[-1,0],[0,1],[1,0],[0,-1]][n];return occupied.get(`${row+dr},${column+dc}`)===t;}).map(edge=>'join-'+edge).join(' '):'';return `<button type="button" class="floor-cell ${status} ${joined} ${t&&this.tableKey(t)===this.selected?'table-selected':''} ${this.cells.has(key)?'cell-selected':''}" data-cell="${key}" ${t?`data-table="${this.tableKey(t)}"`:''} aria-label="${t?`${escapeHtml(t.name)} ${t.capacity} ที่นั่ง ${!t.active?'ปิดรับ':t.bill_id?t.expired?'ไม่ว่าง หมดเวลา':'ไม่ว่าง':'ว่าง'} · `:''}แถว ${row+1} คอลัมน์ ${column+1}" ${!this.design&&!t?'disabled':''} aria-pressed="${this.design?this.cells.has(key):Boolean(t&&this.tableKey(t)===this.selected)}"></button>`;}).join('')}${tables.map(t=>this.tableLabel(t)).join('')}</div></div></div></div>`;
   $('#content').innerHTML=
    `<div class="floor-layout"><aside class="card floor-selector"><h2>เลือกชั้น</h2>${floorTabs}</aside><div class="floor-main">${floorHeader}${workspace}${legend}</div></div>`;
   this.bindDrag();
+  if(this.design&&this.cells.size&&!this.additive){
+   const panel=document.createElement('form');panel.className='floor-selection-panel';panel.setAttribute('aria-label',this.replace?'ยืนยันพื้นที่โต๊ะ':'เพิ่มโต๊ะในพื้นที่ที่เลือก');
+   const table=this.draft.find(t=>this.tableKey(t)===this.selected);
+   panel.innerHTML=`<strong>${this.replace?'พื้นที่ใหม่ · '+escapeHtml(table?.name||''):'เพิ่มโต๊ะ'} · ${this.cells.size} ช่อง</strong>${this.replace?'':`<div class="floor-selection-fields">${field('ชื่อโต๊ะ','selectionName','','text','required maxlength="30"')}${field('ที่นั่ง','selectionCapacity',2,'number','required min="1" max="2147483647"')}</div>`}<div class="floor-selection-buttons"><button type="submit" class="btn btn-primary">ตกลง</button><button type="button" class="btn btn-outline-secondary" data-floor="cancel-area">ยกเลิก</button></div><button type="button" class="btn btn-link" data-floor="continue-selection">เลือกพื้นที่เพิ่ม</button>${!this.replace&&state.tables.some(t=>!t.floor_id&&!this.draft.some(d=>d.id===t.id))?'<button type="button" class="btn btn-link" data-floor="existing-table">ใช้โต๊ะที่มีอยู่แล้ว</button>':''}`;
+   panel.onsubmit=e=>{e.preventDefault();try{this.confirmSelection(new FormData(panel));}catch(error){toast(error.message);}};
+   $('.floor-canvas').append(panel);
+   this.selectionObserver=new ResizeObserver(()=>this.positionSelection(panel));this.selectionObserver.observe($('#floorBoard'));this.positionSelection(panel);
+  }
  },
- finishSelection(){if(!this.cells.size)return;this.additive=false;if(this.replace){const t=this.draft.find(x=>this.tableKey(x)===this.selected);if(!t)return;showModal('ปรับพื้นที่โต๊ะ '+t.name,`<p>ใช้พื้นที่ที่เลือก ${this.cells.size} ช่องแทนพื้นที่เดิม ${t.cells.length} ช่อง?</p><button type="button" class="btn btn-outline-secondary" data-floor="continue-selection">เลือกพื้นที่เพิ่ม</button>`,()=>{t.cells=this.selectionCells();this.cells.clear();this.replace=false;this.dirty=true;return {skipRefresh:true,message:'ปรับพื้นที่แล้ว กดบันทึกผังเพื่อใช้งาน'};},'ใช้พื้นที่นี้');}else this.editTable(null);},
- servicePanel(t){if(!t)return '<h3>เลือกโต๊ะในผัง</h3><p class="mt-2 muted">เปิดบิล ดู QR เช็คบิล หรือจัดการสถานะโต๊ะได้ที่นี่</p>';return `<p class="mt-2">${t.capacity} ที่นั่ง · ${t.cells.length} ช่อง</p>${badge(!t.active?'ปิดรับ':t.bill_id?'ไม่ว่าง':'ว่าง',!t.active?'red':t.bill_id?'gray':'green')}${t.bill_id?`<p class="mt-3">ลูกค้า ${t.guests} คน<br>สิ้นสุด ${date(t.ends_at)}</p>${t.expired?'<div class="warning-strip">◷ หมดเวลาสั่งอาหาร<br>ลูกค้ายังทานต่อได้</div>':''}<div class="floor-stack mt-3">${button('รายละเอียด / QR','bill',t.bill_id)}${button('ย้ายบิลไปโต๊ะอื่น','move',t.bill_id)}${button('เช็คบิล','checkout',t.bill_id,'btn-primary')}</div>`:`${!t.active?`<p class="mt-3 muted">${escapeHtml(t.closure_reason||'ปิดปรับปรุงชั่วคราว')}</p>`:''}<div class="floor-stack mt-3">${t.active?button('รับลูกค้า / เปิดบิล','open',t.id,'btn-primary'):''}<button class="btn btn-outline-${t.active?'danger':'success'}" data-floor="availability" data-id="${t.id}">${t.active?'ปิดรับ / ปรับปรุง':'เปิดรับลูกค้าอีกครั้ง'}</button></div>`}`;},
+ finishSelection(){if(!this.cells.size)return;this.additive=false;this.render();},
+ positionSelection(panel){
+  const selected=[...document.querySelectorAll('#floorBoard .cell-selected')];if(!selected.length||!panel.isConnected)return;
+  const bounds=selected.map(el=>el.getBoundingClientRect()),left=Math.min(...bounds.map(r=>r.left)),right=Math.max(...bounds.map(r=>r.right)),bottom=Math.max(...bounds.map(r=>r.bottom)),rect=panel.getBoundingClientRect(),canvas=$('.floor-canvas').getBoundingClientRect();
+  panel.style.left=`${Math.max(12,Math.min((left+right-rect.width)/2,document.documentElement.clientWidth-rect.width-12))-canvas.left}px`;
+  panel.style.top=`${Math.max(12,Math.min(bottom-rect.height,document.documentElement.clientHeight-rect.height-12))-canvas.top}px`;
+ },
+ confirmSelection(form){
+  if(!this.cells.size)return;
+  if(this.replace){const table=this.draft.find(t=>this.tableKey(t)===this.selected);if(!table)return;table.cells=this.selectionCells();}
+  else{const name=String(form.get('selectionName')||'').trim(),capacity=Number(form.get('selectionCapacity'));if(!name)throw new Error('กรุณาระบุชื่อโต๊ะ');if(!Number.isInteger(capacity)||capacity<1||capacity>2147483647)throw new Error('กรุณาระบุจำนวนที่นั่งให้ถูกต้อง');if(this.draft.some(t=>t.name===name))throw new Error('ชื่อโต๊ะซ้ำในผัง');const table={key:requestKey(),name,capacity,active:true,cells:this.selectionCells()};this.draft.push(table);this.selected=this.tableKey(table);}
+  this.cells.clear();this.replace=false;this.additive=false;this.mark();toast('ปรับพื้นที่แล้ว กดบันทึกผังเพื่อใช้งาน');
+ },
+ servicePanel(t){if(!t)return '<h3>เลือกโต๊ะในผัง</h3><p class="mt-2 muted">เปิดบิล ดู QR เช็คบิล หรือจัดการสถานะโต๊ะได้ที่นี่</p>';return `<p class="mt-2">${t.capacity} ที่นั่ง · ${t.cells.length} ช่อง</p>${badge(!t.active?'ปิดรับ':t.bill_id?'ไม่ว่าง':'ว่าง',!t.active?'red':t.bill_id?'gray':'green')}${t.bill_id?`<p class="mt-3">ลูกค้า ${t.guests} คน<br>สิ้นสุด ${date(t.ends_at)}</p><div class="service-countdown">เวลาคงเหลือ ${tableCountdown(t)}</div>${t.expired?'<div class="warning-strip">◷ หมดเวลาสั่งอาหาร<br>ลูกค้ายังทานต่อได้</div>':''}<div class="floor-stack mt-3">${button('รายละเอียด / QR','bill',t.bill_id)}${button('ย้ายบิลไปโต๊ะอื่น','move',t.bill_id)}${button('เช็คบิล','checkout',t.bill_id,'btn-primary')}</div>`:`${!t.active?`<p class="mt-3 muted">${escapeHtml(t.closure_reason||'ปิดปรับปรุงชั่วคราว')}</p>`:''}<div class="floor-stack mt-3">${t.active?button('รับลูกค้า / เปิดบิล','open',t.id,'btn-primary'):''}<button class="btn btn-outline-${t.active?'danger':'success'}" data-floor="availability" data-id="${t.id}">${t.active?'ปิดรับ / ปรับปรุง':'เปิดรับลูกค้าอีกครั้ง'}</button></div>`}`;},
  selectionCells(){return Array.from(this.cells,k=>{const [row,column]=k.split(',').map(Number);return {row,column};});},
  availableCell(key){const t=this.draft.find(t=>t.cells.some(c=>`${c.row},${c.column}`===key));return !t||(this.replace&&this.tableKey(t)===this.selected);},
  bindDrag(){
@@ -124,7 +175,7 @@ const floorPlan={id:null,layout:null,draft:[],design:page==='/admin/floor-plan',
   if(action==='edit-table'&&t)this.editTable(t);
   if(action==='clear-cells'){this.cells.clear();this.render();}
   if(action==='replace-area'&&t){this.replace=true;this.additive=false;this.cells.clear();editor.hide();this.render();toast('ลากเลือกพื้นที่ใหม่ให้โต๊ะ '+t.name);}
-  if(action==='cancel-area'){this.replace=false;this.cells.clear();this.render();}
+  if(action==='cancel-area'){this.replace=false;this.additive=false;this.cells.clear();this.render();}
   if(action==='apply-area'&&t&&this.cells.size){t.cells=this.selectionCells();this.cells.clear();this.replace=false;this.mark();}
   if(action==='remove-table'&&t&&!t.bill_id)showModal('นำโต๊ะออกจากผัง',`<p>นำโต๊ะ ${escapeHtml(t.name)} ออกจากผังนี้?</p>`,()=>{this.draft=this.draft.filter(x=>x!==t);this.selected=null;this.replace=false;this.cells.clear();this.dirty=true;return {skipRefresh:true,message:'นำโต๊ะออกแล้ว กดบันทึกผังเพื่อใช้งาน'};},'นำออกจากผัง');
   if(action==='existing-table'){const free=state.tables.filter(x=>!x.floor_id&&!this.draft.some(t=>t.id===x.id));if(!free.length){toast('ไม่มีโต๊ะที่ยังไม่ได้วางในผัง');return;}const cells=this.selectionCells();showModal('วางโต๊ะที่มีอยู่แล้ว',select('โต๊ะ','tableId',free.map(x=>`<option value="${x.id}">${escapeHtml(x.name)} · ${x.capacity} ที่นั่ง</option>`).join('')),form=>{const table=structuredClone(free.find(x=>x.id===Number(form.get('tableId'))));table.cells=cells;this.draft.push(table);this.selected=this.tableKey(table);this.cells.clear();this.dirty=true;return {skipRefresh:true,message:'วางในแบบร่างแล้ว กดบันทึกผังเพื่อใช้งาน'};});}
@@ -141,3 +192,6 @@ document.addEventListener('click',e=>{const link=e.target.closest('a[data-nav]')
 window.addEventListener('beforeunload',e=>{if(page==='/admin/floor-plan'&&floorPlan.dirty){e.preventDefault();e.returnValue='';}});
 // Operation mode uses the server's expiry flag and refreshes while no editor is open.
 setInterval(()=>{if(page==='/admin/reception'&&!busy&&!document.querySelector('.modal.show')&&!document.hidden)refresh();},15000);
+
+setInterval(()=>floorPlan.updateCountdowns(),1000);
+document.addEventListener('visibilitychange',()=>floorPlan.updateCountdowns());

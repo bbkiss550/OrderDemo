@@ -1,0 +1,60 @@
+// Test-only dependency: npm install --prefix .runtime/calendar-test --no-save --package-lock=false jsdom@26.1.0
+const fs = require('node:fs'), path = require('node:path'), assert = require('node:assert/strict');
+const {JSDOM} = require('../.runtime/calendar-test/node_modules/jsdom');
+const root = path.resolve(__dirname, '../src/main/resources/static');
+const months = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+
+async function verify(userAgent) {
+ const dom = new JSDOM('<!doctype html><html lang="th"><body><section id="content"></section><div id="modalBody"></div></body></html>', {runScripts:'outside-only', pretendToBeVisual:true});
+ const {window} = dom, doc = window.document;
+ Object.defineProperty(window.navigator, 'userAgent', {value:userAgent});
+ for (const asset of ['assets/vendor/flatpickr/flatpickr.min.js','assets/vendor/flatpickr/th.js','js/calendar.js']) window.eval(fs.readFileSync(path.join(root, asset),'utf8'));
+ const settle = () => new Promise(resolve => window.setTimeout(resolve,0));
+ const content = doc.getElementById('content');
+ content.innerHTML = '<form id="filters"><label for="f-from">ตั้งแต่วันที่</label><input id="f-from" name="from" type="date" value="2024-02-28" min="1900-01-01" max="2200-12-31" required><label for="f-to">ถึงวันที่</label><input id="f-to" name="to" type="date" min="1900-01-01" max="2200-12-31"></form>';
+ await settle();
+ let input = doc.getElementById('f-from'), picker = input._flatpickr;
+ assert(picker && !picker.isMobile, 'Use Thai calendar even on iPad');
+ assert.equal(input.value,'2024-02-28'); assert.equal(picker.altInput.value,'28 กุมภาพันธ์ 2024');
+ assert.equal(doc.querySelector('label').htmlFor,picker.altInput.id);
+ assert.deepEqual(Array.from(picker.monthsDropdownContainer.options, option => option.text),months);
+ assert(picker.calendarContainer.querySelector('.flatpickr-weekday').textContent.includes('จ'));
+ picker.open(); assert.equal(picker.altInput.getAttribute('aria-expanded'),'true');
+ const currentDay = day => [...picker.days.children].find(el => !el.classList.contains('prevMonthDay') && !el.classList.contains('nextMonthDay') && el.textContent===String(day));
+ currentDay(29).dispatchEvent(new window.MouseEvent('click',{bubbles:true}));
+ assert.equal(input.value,'2024-02-29');
+ assert.equal(new window.FormData(doc.getElementById('filters')).get('from'),'2024-02-29');
+ assert.equal(picker.altInput.getAttribute('aria-expanded'),'false');
+ picker.setDate('2025-02-01'); assert(!currentDay(29), 'Non-leap February must not offer February 29');
+ picker.setDate('2026-12-31'); picker.changeMonth(1);
+ assert.equal(picker.currentMonth,0); assert.equal(picker.currentYear,2027);
+ picker.changeMonth(-1); assert.equal(picker.currentMonth,11); assert.equal(picker.currentYear,2026);
+ assert(!picker.isEnabled('1899-12-31')); assert(picker.isEnabled('1900-01-01'));
+ assert(picker.isEnabled('2200-12-31')); assert(!picker.isEnabled('2201-01-01'));
+ const optional = doc.getElementById('f-to')._flatpickr;
+ optional.setDate('2026-10-19');
+ const clear = [...optional.calendarContainer.querySelectorAll('button')].find(el=>el.textContent==='ล้างวันที่');
+ assert(clear); clear.click(); assert.equal(optional.input.value,'');
+ assert(![...picker.calendarContainer.querySelectorAll('button')].some(el=>el.textContent==='ล้างวันที่'));
+ picker.clear();
+ let submitted = false; doc.getElementById('filters').addEventListener('submit',()=>submitted=true);
+ const submit = new window.Event('submit',{bubbles:true,cancelable:true});
+ doc.getElementById('filters').dispatchEvent(submit); assert(submit.defaultPrevented); assert(!submitted);
+ assert(picker.isOpen, 'Missing required date focuses its calendar');
+ const oldPicker = picker;
+ content.innerHTML = '<form><label for="f-reload">วันที่เริ่มต้น</label><input id="f-reload" name="reportFrom" type="date" value="2026-10-19" required></form>';
+ await settle();
+ picker = doc.getElementById('f-reload')._flatpickr;
+ assert(picker); assert.equal(picker.altInput.value,'19 ตุลาคม 2026');
+ assert.equal(doc.querySelectorAll('.flatpickr-calendar').length,1, 'Remove detached calendars after filter rerender');
+ assert(!oldPicker.calendarContainer);
+ const today = [...picker.calendarContainer.querySelectorAll('button')].find(el=>el.textContent==='วันนี้');
+ today.click(); assert.match(picker.input.value,/^\d{4}-\d{2}-\d{2}$/);
+ assert.equal([...new window.FormData(picker.input.form)].length,1, 'Only original ISO input is submitted');
+ dom.window.close();
+}
+(async () => {
+ await verify('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/130.0.0.0 Safari/537.36');
+ await verify('Mozilla/5.0 (iPad; CPU OS 17_0 like Mac OS X) AppleWebKit/605.1.15 Version/17.0 Mobile/15E148 Safari/604.1');
+ console.log('PASS: Thai months/weekdays on desktop and iPad user agents, ISO form values, leap days/year transitions, date limits, clear/required dates and calendar cleanup after rerender. DOM simulation only.');
+})().catch(error => {console.error(error); process.exitCode=1;});
